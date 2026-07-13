@@ -1,4 +1,5 @@
 from flask import Flask
+from app.api.health import health_bp
 
 
 def create_app() -> Flask:
@@ -9,5 +10,8 @@ def create_app() -> Flask:
         Flask: Configured Flask application instance.
     """
     app = Flask(__name__)
+
+    # Register Blueprints
+    app.register_blueprint(health_bp)
 
     return app
