@@ -1,0 +1,30 @@
+[
+    {
+        "type": "SQL Injection",
+        "severity": "High",
+        "patterns": [
+            "'\\s*OR\\s*1=1",
+            "union\\s+select",
+            "drop\\s+table",
+            "--"
+        ]
+    },
+    {
+        "type": "Cross-Site Scripting (XSS)",
+        "severity": "High",
+        "patterns": [
+            "<script.*?>",
+            "javascript:",
+            "onerror\\s*=",
+            "onload\\s*="
+        ]
+    },
+    {
+        "type": "Directory Traversal",
+        "severity": "Medium",
+        "patterns": [
+            "\\.\\./",
+            "/etc/passwd"
+        ]
+    }
+]
