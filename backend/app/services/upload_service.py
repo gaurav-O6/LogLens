@@ -1,11 +1,9 @@
 from pathlib import Path
 
+from flask import current_app
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-from flask import current_app
 
-upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
-upload_folder.mkdir(exist_ok=True)
 
 ALLOWED_EXTENSIONS = {".log"}
 
@@ -33,6 +31,9 @@ def save_uploaded_log(file: FileStorage) -> str:
 
     if extension not in ALLOWED_EXTENSIONS:
         raise ValueError("Only .log files are allowed.")
+
+    upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+    upload_folder.mkdir(exist_ok=True)
 
     save_path = upload_folder / filename
 
