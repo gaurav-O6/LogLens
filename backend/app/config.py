@@ -22,4 +22,5 @@ class Config:
     )
 
     # File Uploads
+    UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
     MAX_CONTENT_LENGTH = 1024 * 1024 * 1024  # 1 GB
