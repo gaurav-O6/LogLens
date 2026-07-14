@@ -1,12 +1,12 @@
-from app.parser.apache_parser import ApacheLogParser
+from pathlib import Path
 
-sample_log = (
-    '192.168.1.10 - - [14/Jul/2026:17:30:15 +0530] '
-    '"GET /index.html HTTP/1.1" 200 1024 "-" "Mozilla/5.0"'
-)
+from app.parser.apache_parser import ApacheLogParser
 
 parser = ApacheLogParser()
 
-result = parser.parse_line(sample_log)
+log_file = Path("../sample_logs/test.log")
 
-print(result)
+parsed_logs = parser.parse_file(log_file)
+
+for log in parsed_logs:
+    print(log)
