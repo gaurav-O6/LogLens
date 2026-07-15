@@ -4,6 +4,7 @@ from app.parser.apache_parser import ApacheLogParser
 from app.detection.detector import ThreatDetector
 from app.detection.brute_force import BruteForceDetector
 from app.services.aggregation_service import AggregationService
+from app.services.log_service import save_logs
 
 
 class ProcessingService:
@@ -14,6 +15,8 @@ class ProcessingService:
     Log File
         ↓
     Parser
+        ↓
+    Save Logs
         ↓
     Regex Threat Detection
         ↓
@@ -35,7 +38,11 @@ class ProcessingService:
         Process a log file through the complete detection pipeline.
         """
 
+        # Parse the uploaded log file
         parsed_logs = self.parser.parse_file(file_path)
+
+        # Persist parsed logs to the database
+        save_logs(parsed_logs)
 
         detections = []
 

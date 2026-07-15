@@ -1,17 +1,22 @@
 from pathlib import Path
 
+from app import create_app
 from app.services.processing_service import ProcessingService
 
-service = ProcessingService()
 
-result = service.process_file(Path("../sample_logs/test.log"))
+app = create_app()
 
-print(f"Parsed Logs: {len(result['parsed_logs'])}")
-print(f"Detections: {len(result['detections'])}")
+with app.app_context():
+    service = ProcessingService()
 
-print("\nDetections:")
-for detection in result["detections"]:
-    print(detection)
+    result = service.process_file(Path("../sample_logs/test.log"))
 
-print("\nSummary:")
-print(result["summary"])
+    print(f"Parsed Logs: {len(result['parsed_logs'])}")
+    print(f"Detections: {len(result['detections'])}")
+
+    print("\nDetections:")
+    for detection in result["detections"]:
+        print(detection)
+
+    print("\nSummary:")
+    print(result["summary"])

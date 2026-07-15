@@ -1,3 +1,13 @@
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables BEFORE importing Config
+project_root = Path(__file__).resolve().parents[2]
+env_path = project_root / ".env"
+
+load_dotenv(env_path)
+
+
 from flask import Flask
 
 from app import models
@@ -11,20 +21,18 @@ from app.database.migrate import migrate
 def create_app() -> Flask:
     """
     Create and configure the Flask application.
-
-    Returns:
-        Flask: Configured Flask application instance.
     """
+
     app = Flask(__name__)
 
-    # Load application configuration
+    # Load configuration
     app.config.from_object(Config)
 
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Register Blueprints
+    # Register blueprints
     app.register_blueprint(health_bp)
     app.register_blueprint(upload_bp)
 
