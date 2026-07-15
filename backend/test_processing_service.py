@@ -9,5 +9,9 @@ result = service.process_file(Path("../sample_logs/test.log"))
 print(f"Parsed Logs: {len(result['parsed_logs'])}")
 print(f"Detections: {len(result['detections'])}")
 
+print("\nDetections:")
 for detection in result["detections"]:
     print(detection)
+
+print("\nSummary:")
+print(result["summary"])
