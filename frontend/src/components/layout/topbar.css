@@ -1,0 +1,126 @@
+.topbar {
+
+    height:72px;
+
+
+    display:flex;
+
+
+    justify-content:space-between;
+
+
+    align-items:center;
+
+
+    padding:0 28px;
+
+
+    background:#0d1117;
+
+
+    border-bottom:1px solid #30363d;
+
+
+}
+
+
+
+.topbar h1 {
+
+
+    margin:0;
+
+
+    color:#f0f6fc;
+
+
+    font-size:22px;
+
+
+    font-weight:600;
+
+
+}
+
+
+
+.topbar p {
+
+
+    margin-top:5px;
+
+
+    color:#8b949e;
+
+
+    font-size:13px;
+
+
+}
+
+
+
+.status-group {
+
+
+    display:flex;
+
+
+    gap:10px;
+
+
+}
+
+
+
+.status-badge {
+
+
+    display:flex;
+
+
+    align-items:center;
+
+
+    gap:7px;
+
+
+    padding:8px 14px;
+
+
+    border-radius:8px;
+
+
+    background:#161b22;
+
+
+    border:1px solid #30363d;
+
+
+    color:#8b949e;
+
+
+    font-size:13px;
+
+
+}
+
+
+
+.status-badge.online {
+
+
+    color:#3fb950;
+
+
+}
+
+
+
+.status-badge.online svg {
+
+
+    color:#3fb950;
+
+
+}
