@@ -9,34 +9,34 @@ class ThreatDetector:
     """
 
     def __init__(self):
+
         signatures_path = Path(__file__).parent / "signatures.json"
 
         with signatures_path.open("r", encoding="utf-8") as file:
             self.signatures = json.load(file)
 
-        # Compile regex patterns once for better performance
+
+        # Compile regex patterns once
         for signature in self.signatures:
+
             signature["compiled_patterns"] = [
                 re.compile(pattern, re.IGNORECASE)
                 for pattern in signature["patterns"]
             ]
 
+
     def detect(self, log_entry: dict) -> list[dict]:
         """
         Detect attacks in a parsed log entry.
-
-        Args:
-            log_entry: Parsed log dictionary.
-
-        Returns:
-            List of detected attacks.
         """
 
         detections = []
 
         path = log_entry.get("path", "")
 
+
         for signature in self.signatures:
+
             for regex in signature["compiled_patterns"]:
 
                 if regex.search(path):
@@ -45,12 +45,21 @@ class ThreatDetector:
                         {
                             "attack_type": signature["type"],
                             "severity": signature["severity"],
+
                             "source_ip": log_entry["ip"],
                             "timestamp": log_entry["timestamp"],
+
                             "matched_pattern": regex.pattern,
+
+                            # Investigation data
+                            "http_method": log_entry.get("method"),
+                            "request_path": log_entry.get("path"),
+                            "status_code": log_entry.get("status_code"),
+                            "raw_log": log_entry.get("raw_log"),
                         }
                     )
 
                     break
+
 
         return detections

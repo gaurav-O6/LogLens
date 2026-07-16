@@ -9,10 +9,12 @@ load_dotenv(env_path)
 
 
 from flask import Flask
+from flask_cors import CORS
 
 from app import models
 from app.api.health import health_bp
 from app.api.upload import upload_bp
+from app.api.analysis import analysis_bp
 from app.config import Config
 from app.database.db import db
 from app.database.migrate import migrate
@@ -24,6 +26,7 @@ def create_app() -> Flask:
     """
 
     app = Flask(__name__)
+    CORS(app)
 
     # Load configuration
     app.config.from_object(Config)
@@ -35,5 +38,6 @@ def create_app() -> Flask:
     # Register blueprints
     app.register_blueprint(health_bp)
     app.register_blueprint(upload_bp)
+    app.register_blueprint(analysis_bp)
 
     return app
