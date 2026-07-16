@@ -209,3 +209,73 @@
     color:#ef4444;
 
 }
+
+/* ---------- Threat Center ---------- */
+
+.threat-toolbar{
+
+    display:flex;
+
+    gap:16px;
+
+    flex-wrap:wrap;
+
+    background:#111827;
+
+    border:1px solid #30363d;
+
+    border-radius:14px;
+
+    padding:18px;
+
+}
+
+.threat-toolbar input{
+
+    flex:1;
+
+    min-width:260px;
+
+    background:#0d1117;
+
+    border:1px solid #30363d;
+
+    color:white;
+
+    padding:12px 14px;
+
+    border-radius:8px;
+
+}
+
+.threat-toolbar input:focus{
+
+    outline:none;
+
+    border-color:#10a37f;
+
+}
+
+.threat-toolbar select{
+
+    background:#0d1117;
+
+    color:white;
+
+    border:1px solid #30363d;
+
+    padding:12px;
+
+    border-radius:8px;
+
+    min-width:180px;
+
+}
+
+.threat-toolbar select:focus{
+
+    outline:none;
+
+    border-color:#10a37f;
+
+}

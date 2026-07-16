@@ -4,109 +4,86 @@ function DetectionTable({ detections }) {
 
         <div className="table-container">
 
-
             <div className="table-header">
-
 
                 <div className="table-title">
 
-                    <h2>
-                        Recent Threats
-                    </h2>
+                    <h2>Threat Investigations</h2>
 
                     <p>
-                        Latest detected security events
+                        Search and investigate detected threats
                     </p>
 
                 </div>
 
-
-
                 <div className="detection-count">
 
-                    <strong>
-                        {detections.length}
-                    </strong>
+                    <strong>{detections.length}</strong>
 
-                    <span>
-                        Detections
-                    </span>
+                    <span>Detections</span>
 
                 </div>
 
-
             </div>
-
-
-
 
             <div className="table-wrapper">
 
-
                 <table>
-
 
                     <thead>
 
                         <tr>
 
-                            <th>
-                                Attack Type
-                            </th>
-
-                            <th>
-                                Severity
-                            </th>
-
-                            <th>
-                                Source IP
-                            </th>
-
-                            <th>
-                                Pattern
-                            </th>
+                            <th>Timestamp</th>
+                            <th>Attack Type</th>
+                            <th>Severity</th>
+                            <th>Source IP</th>
+                            <th>Pattern</th>
 
                         </tr>
 
                     </thead>
 
-
-
                     <tbody>
 
-
                         {
-                            detections.length === 0 ? (
 
-                                <tr>
+                            detections.length === 0 ?
 
-                                    <td
-                                        colSpan="4"
-                                        className="empty-table"
-                                    >
+                                (
 
-                                        No threats detected
+                                    <tr>
 
-                                    </td>
+                                        <td
+                                            colSpan="5"
+                                            className="empty-table"
+                                        >
 
-                                </tr>
+                                            No threats found
 
+                                        </td>
 
-                            ) : (
+                                    </tr>
 
+                                )
+
+                                :
 
                                 detections.map((item, index) => (
 
                                     <tr key={index}>
 
+                                        <td>
+
+                                            {item.timestamp || "-"}
+
+                                        </td>
 
                                         <td className="attack-name">
 
                                             {item.attack_type}
 
                                         </td>
-
-
 
                                         <td>
 
@@ -120,15 +97,11 @@ function DetectionTable({ detections }) {
 
                                         </td>
 
-
-
                                         <td className="ip-address">
 
                                             {item.source_ip}
 
                                         </td>
-
-
 
                                         <td className="pattern-cell">
 
@@ -136,29 +109,22 @@ function DetectionTable({ detections }) {
 
                                         </td>
 
-
                                     </tr>
 
                                 ))
 
-                            )
                         }
-
 
                     </tbody>
 
-
                 </table>
 
-
             </div>
-
 
         </div>
 
     );
 
 }
-
 
 export default DetectionTable;
