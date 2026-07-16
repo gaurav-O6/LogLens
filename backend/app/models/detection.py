@@ -33,6 +33,26 @@ class Detection(db.Model):
         index=True
     )
 
+    country = db.Column(
+        db.String(100),
+        nullable=True,
+    )
+
+    city = db.Column(
+        db.String(100),
+        nullable=True,
+    )
+
+    latitude = db.Column(
+        db.Float,
+        nullable=True,
+    )
+
+    longitude = db.Column(
+        db.Float,
+        nullable=True,
+    )
+
     timestamp = db.Column(
         db.String(50),
         nullable=True

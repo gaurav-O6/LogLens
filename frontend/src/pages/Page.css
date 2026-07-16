@@ -279,3 +279,56 @@
     border-color:#10a37f;
 
 }
+
+.threat-controls {
+
+    display:flex;
+
+    gap:14px;
+
+    background:#111827;
+
+    padding:18px;
+
+    border:1px solid #30363d;
+
+    border-radius:14px;
+
+}
+
+
+
+.threat-controls input,
+.threat-controls select {
+
+    background:#0d1117;
+
+    color:white;
+
+    border:1px solid #30363d;
+
+    border-radius:8px;
+
+    padding:10px 14px;
+
+    font-size:14px;
+
+}
+
+
+
+.threat-controls input {
+
+    flex:1;
+
+}
+
+
+.threat-controls input:focus,
+.threat-controls select:focus {
+
+    outline:none;
+
+    border-color:#10a37f;
+
+}

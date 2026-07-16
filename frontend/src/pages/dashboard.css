@@ -525,3 +525,288 @@ td:nth-child(4) {
 
 
 }
+
+/* Threat Investigation Panel */
+
+.clickable-row {
+    cursor: pointer;
+}
+
+
+.clickable-row:hover {
+    background:#1f2937;
+}
+
+
+
+.investigation-panel {
+
+    margin-top:24px;
+
+    background:#111827;
+
+    border:1px solid #30363d;
+
+    border-radius:14px;
+
+    overflow:hidden;
+
+}
+
+
+
+.panel-header {
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:18px 20px;
+
+    border-bottom:1px solid #30363d;
+
+}
+
+
+
+.panel-header h2 {
+
+    color:white;
+
+    font-size:18px;
+
+}
+
+
+
+.panel-header button {
+
+    background:none;
+
+    border:none;
+
+    color:#8b949e;
+
+    font-size:24px;
+
+    cursor:pointer;
+
+}
+
+
+
+.panel-header button:hover {
+
+    color:white;
+
+}
+
+
+
+.panel-content {
+
+    padding:20px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+
+}
+
+
+
+.panel-content p {
+
+    color:#c9d1d9;
+
+    margin:0;
+
+}
+
+
+
+.panel-content strong {
+
+    color:white;
+
+}
+
+
+
+.panel-content pre {
+
+    background:#0d1117;
+
+    border:1px solid #30363d;
+
+    border-radius:8px;
+
+    padding:15px;
+
+    color:#8b949e;
+
+    overflow-x:auto;
+
+    white-space:pre-wrap;
+
+    font-size:13px;
+
+}
+
+/* Clickable rows */
+
+.clickable-row {
+    cursor:pointer;
+}
+
+
+.clickable-row:hover {
+    background:#1f2937;
+}
+
+
+
+
+/* Investigation Panel */
+
+.investigation-panel {
+
+    margin-top:24px;
+
+    background:#111827;
+
+    border:1px solid #30363d;
+
+    border-radius:14px;
+
+    overflow:hidden;
+
+}
+
+
+
+.panel-header {
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:18px 20px;
+
+    border-bottom:1px solid #30363d;
+
+}
+
+
+
+.panel-header h2 {
+
+    color:white;
+
+    font-size:18px;
+
+}
+
+
+
+.panel-header button {
+
+    background:none;
+
+    border:none;
+
+    color:#8b949e;
+
+    font-size:24px;
+
+    cursor:pointer;
+
+}
+
+
+
+.panel-header button:hover {
+
+    color:white;
+
+}
+
+
+
+
+.panel-content {
+
+    padding:20px;
+
+    color:#e6edf3;
+
+}
+
+
+
+.panel-content p {
+
+    margin-bottom:12px;
+
+    color:#c9d1d9;
+
+}
+
+
+
+.panel-content strong {
+
+    color:white;
+
+}
+
+
+
+.panel-content pre {
+
+    margin-top:10px;
+
+    background:#0d1117;
+
+    border:1px solid #30363d;
+
+    border-radius:10px;
+
+    padding:15px;
+
+    overflow-x:auto;
+
+    color:#8b949e;
+
+    font-size:13px;
+
+}
+
+.export-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.export-btn {
+    background: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.export-btn:hover {
+    background: #21262d;
+    border-color: #58a6ff;
+}

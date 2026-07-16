@@ -10,29 +10,40 @@ class ThreatDetector:
 
     def __init__(self):
 
-        signatures_path = Path(__file__).parent / "signatures.json"
+        signatures_path = (
+            Path(__file__).parent / "signatures.json"
+        )
 
-        with signatures_path.open("r", encoding="utf-8") as file:
+        with signatures_path.open(
+            "r",
+            encoding="utf-8"
+        ) as file:
             self.signatures = json.load(file)
 
 
-        # Compile regex patterns once
         for signature in self.signatures:
 
             signature["compiled_patterns"] = [
-                re.compile(pattern, re.IGNORECASE)
+                re.compile(
+                    pattern,
+                    re.IGNORECASE
+                )
                 for pattern in signature["patterns"]
             ]
 
 
     def detect(self, log_entry: dict) -> list[dict]:
         """
-        Detect attacks in a parsed log entry.
+        Detect attacks from parsed log.
         """
 
         detections = []
 
-        path = log_entry.get("path", "")
+
+        path = log_entry.get(
+            "path",
+            ""
+        )
 
 
         for signature in self.signatures:
@@ -44,18 +55,34 @@ class ThreatDetector:
                     detections.append(
                         {
                             "attack_type": signature["type"],
+
                             "severity": signature["severity"],
 
-                            "source_ip": log_entry["ip"],
-                            "timestamp": log_entry["timestamp"],
+                            "source_ip": log_entry.get(
+                                "ip"
+                            ),
+
+                            "timestamp": log_entry.get(
+                                "timestamp"
+                            ),
 
                             "matched_pattern": regex.pattern,
 
-                            # Investigation data
-                            "http_method": log_entry.get("method"),
-                            "request_path": log_entry.get("path"),
-                            "status_code": log_entry.get("status_code"),
-                            "raw_log": log_entry.get("raw_log"),
+                            "http_method": log_entry.get(
+                                "method"
+                            ),
+
+                            "request_path": log_entry.get(
+                                "path"
+                            ),
+
+                            "status_code": log_entry.get(
+                                "status_code"
+                            ),
+
+                            "raw_log": log_entry.get(
+                                "raw_log"
+                            ),
                         }
                     )
 

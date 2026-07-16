@@ -1,6 +1,14 @@
+import { useState } from "react";
+
+
 function DetectionTable({ detections }) {
 
+    const [selectedDetection, setSelectedDetection] = useState(null);
+
+
     return (
+
+        <>
 
         <div className="table-container">
 
@@ -16,6 +24,7 @@ function DetectionTable({ detections }) {
 
                 </div>
 
+
                 <div className="detection-count">
 
                     <strong>{detections.length}</strong>
@@ -25,6 +34,8 @@ function DetectionTable({ detections }) {
                 </div>
 
             </div>
+
+
 
             <div className="table-wrapper">
 
@@ -38,93 +49,234 @@ function DetectionTable({ detections }) {
                             <th>Attack Type</th>
                             <th>Severity</th>
                             <th>Source IP</th>
+                            <th>Location</th>
                             <th>Pattern</th>
 
                         </tr>
 
                     </thead>
 
+
                     <tbody>
 
-                        {
+                    {
+                        detections.length === 0 ?
 
-                            detections.length === 0 ?
+                        (
+                            <tr>
+                                <td
+                                    colSpan="6"
+                                    className="empty-table"
+                                >
+                                    No threats found
+                                </td>
+                            </tr>
+                        )
 
-                                (
+                        :
 
-                                    <tr>
+                        detections.map((item) => (
 
-                                        <td
-                                            colSpan="5"
-                                            className="empty-table"
-                                        >
+                            <tr
+                                key={item.id}
+                                onClick={() =>
+                                    setSelectedDetection(item)
+                                }
+                                className="clickable-row"
+                            >
 
-                                            No threats found
+                                <td>
+                                    {item.timestamp || "-"}
+                                </td>
 
-                                        </td>
 
-                                    </tr>
+                                <td className="attack-name">
+                                    {item.attack_type}
+                                </td>
 
-                                )
 
-                                :
+                                <td>
 
-                                detections.map((item, index) => (
+                                    <span
+                                        className={`severity-badge ${item.severity?.toLowerCase()}`}
+                                    >
+                                        {item.severity}
+                                    </span>
 
-                                    <tr key={index}>
+                                </td>
 
-                                        <td>
 
-                                            {item.timestamp || "-"}
+                                <td className="ip-address">
+                                    {item.source_ip}
+                                </td>
 
-                                        </td>
 
-                                        <td className="attack-name">
+                                <td>
 
-                                            {item.attack_type}
+                                    {
+                                        item.city && item.country ?
 
-                                        </td>
+                                        `${item.city}, ${item.country}`
 
-                                        <td>
+                                        :
 
-                                            <span
-                                                className={`severity-badge ${item.severity.toLowerCase()}`}
-                                            >
+                                        "-"
+                                    }
 
-                                                {item.severity}
+                                </td>
 
-                                            </span>
 
-                                        </td>
+                                <td className="pattern-cell">
+                                    {item.matched_pattern || "-"}
+                                </td>
 
-                                        <td className="ip-address">
 
-                                            {item.source_ip}
+                            </tr>
 
-                                        </td>
+                        ))
 
-                                        <td className="pattern-cell">
-
-                                            {item.matched_pattern || "-"}
-
-                                        </td>
-
-                                    </tr>
-
-                                ))
-
-                        }
+                    }
 
                     </tbody>
 
+
                 </table>
+
 
             </div>
 
+
         </div>
+
+
+
+        {
+            selectedDetection && (
+
+                <div className="investigation-panel">
+
+                    <div className="panel-header">
+
+                        <h2>
+                            Threat Details
+                        </h2>
+
+
+                        <button
+                            onClick={() =>
+                                setSelectedDetection(null)
+                            }
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+
+                    <div className="panel-content">
+
+
+                        <p>
+                            <strong>Attack:</strong>
+                            {" "}
+                            {selectedDetection.attack_type}
+                        </p>
+
+
+                        <p>
+                            <strong>Severity:</strong>
+                            {" "}
+                            {selectedDetection.severity}
+                        </p>
+
+
+                        <p>
+                            <strong>Source IP:</strong>
+                            {" "}
+                            {selectedDetection.source_ip}
+                        </p>
+
+
+                        <p>
+                            <strong>Location:</strong>
+                            {" "}
+                            {
+                                selectedDetection.city &&
+                                selectedDetection.country
+                                ?
+                                `${selectedDetection.city}, ${selectedDetection.country}`
+                                :
+                                "Unknown"
+                            }
+                        </p>
+
+
+                        <p>
+                            <strong>Coordinates:</strong>
+                            {" "}
+                            {
+                                selectedDetection.latitude &&
+                                selectedDetection.longitude
+                                ?
+                                `${selectedDetection.latitude}, ${selectedDetection.longitude}`
+                                :
+                                "Unavailable"
+                            }
+                        </p>
+
+
+                        <p>
+                            <strong>Request:</strong>
+                            {" "}
+                            {selectedDetection.request_path || "-"}
+                        </p>
+
+
+                        <p>
+                            <strong>Method:</strong>
+                            {" "}
+                            {selectedDetection.http_method || "-"}
+                        </p>
+
+
+                        <p>
+                            <strong>Status:</strong>
+                            {" "}
+                            {selectedDetection.status_code || "-"}
+                        </p>
+
+
+                        <p>
+                            <strong>Pattern:</strong>
+                            {" "}
+                            {selectedDetection.matched_pattern || "-"}
+                        </p>
+
+
+                        <p>
+                            <strong>Raw Log:</strong>
+                        </p>
+
+
+                        <pre>
+                            {selectedDetection.raw_log || "-"}
+                        </pre>
+
+
+                    </div>
+
+
+                </div>
+
+            )
+        }
+
+
+        </>
 
     );
 
 }
+
 
 export default DetectionTable;

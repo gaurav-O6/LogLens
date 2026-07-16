@@ -1,40 +1,44 @@
-import { useEffect, useMemo, useState } from "react";
-
-import apiClient from "../api/client";
+import { useEffect, useState } from "react";
 
 import DetectionTable from "../components/DetectionTable";
-import ThreatToolbar from "../components/ThreatToolbar";
+import apiClient from "../api/client";
 
 import "./Page.css";
 
-function Threats() {
+
+function Threats(){
 
     const [detections, setDetections] = useState([]);
 
-    const [searchTerm, setSearchTerm] = useState("");
+    const [search, setSearch] = useState("");
 
     const [severityFilter, setSeverityFilter] = useState("All");
 
     const [attackFilter, setAttackFilter] = useState("All");
 
-    useEffect(() => {
+
+
+    useEffect(()=>{
 
         loadThreats();
 
-    }, []);
+    },[]);
 
-    const loadThreats = async () => {
 
-        try {
+
+    const loadThreats = async()=>{
+
+        try{
 
             const response =
                 await apiClient.get("/analysis/detections");
 
+
             setDetections(response.data);
 
-        }
 
-        catch (error) {
+        }
+        catch(error){
 
             console.error(error);
 
@@ -42,85 +46,77 @@ function Threats() {
 
     };
 
-    const attackOptions = useMemo(() => {
 
-        return [...new Set(
+
+    const attackTypes = [
+        "All",
+        ...new Set(
             detections.map(
-                (item) => item.attack_type
+                item => item.attack_type
             )
-        )];
+        )
+    ];
 
-    }, [detections]);
 
-    const filteredDetections = useMemo(() => {
 
-        return detections.filter((item) => {
+    const filteredDetections = detections.filter(
+        (item)=>{
+
+
+            const text =
+                search.toLowerCase();
+
 
             const matchesSearch =
-
-                item.attack_type
+                item.source_ip
                     .toLowerCase()
-                    .includes(searchTerm.toLowerCase())
+                    .includes(text)
 
                 ||
 
-                item.source_ip
+                item.attack_type
                     .toLowerCase()
-                    .includes(searchTerm.toLowerCase())
+                    .includes(text)
 
                 ||
 
                 (item.matched_pattern || "")
                     .toLowerCase()
-                    .includes(searchTerm.toLowerCase());
+                    .includes(text);
+
+
 
             const matchesSeverity =
-
                 severityFilter === "All"
-
                 ||
-
                 item.severity === severityFilter;
 
+
+
             const matchesAttack =
-
                 attackFilter === "All"
-
                 ||
-
                 item.attack_type === attackFilter;
 
+
+
             return (
-
                 matchesSearch
-
                 &&
-
                 matchesSeverity
-
                 &&
-
                 matchesAttack
-
             );
 
-        });
+        }
+    );
 
-    }, [
 
-        detections,
-
-        searchTerm,
-
-        severityFilter,
-
-        attackFilter
-
-    ]);
 
     return (
 
         <div className="page">
+
 
             <div className="page-heading">
 
@@ -128,34 +124,110 @@ function Threats() {
                     Threat Center
                 </h1>
 
+
                 <p>
                     Investigate detected security threats
                 </p>
 
             </div>
 
-            <ThreatToolbar
 
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
 
-                severityFilter={severityFilter}
-                onSeverityChange={setSeverityFilter}
+            <div className="threat-controls">
 
-                attackFilter={attackFilter}
-                attackOptions={attackOptions}
-                onAttackChange={setAttackFilter}
 
-            />
+                <input
+
+                    type="text"
+
+                    placeholder="Search IP, attack type, pattern..."
+
+                    value={search}
+
+                    onChange={
+                        (e)=>setSearch(e.target.value)
+                    }
+
+                />
+
+
+
+                <select
+
+                    value={severityFilter}
+
+                    onChange={
+                        (e)=>setSeverityFilter(e.target.value)
+                    }
+
+                >
+
+                    <option>
+                        All
+                    </option>
+
+                    <option>
+                        High
+                    </option>
+
+                    <option>
+                        Medium
+                    </option>
+
+                    <option>
+                        Low
+                    </option>
+
+
+                </select>
+
+
+
+
+                <select
+
+                    value={attackFilter}
+
+                    onChange={
+                        (e)=>setAttackFilter(e.target.value)
+                    }
+
+                >
+
+                    {
+                        attackTypes.map(
+                            (type)=>(
+                                <option
+                                    key={type}
+                                >
+                                    {type}
+                                </option>
+                            )
+                        )
+                    }
+
+                </select>
+
+
+
+            </div>
+
+
+
 
             <DetectionTable
+
                 detections={filteredDetections}
+
             />
+
+
 
         </div>
 
     );
 
 }
+
 
 export default Threats;

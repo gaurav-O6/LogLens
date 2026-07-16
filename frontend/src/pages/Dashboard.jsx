@@ -6,68 +6,59 @@ import SeverityChart from "../components/SeverityChart";
 import AttackChart from "../components/AttackChart";
 import DetectionTable from "../components/DetectionTable";
 import DetectionTimeline from "../components/DetectionTimeline";
+import TopAttackers from "../components/TopAttackers";
 
 import "./Dashboard.css";
 
-
 function Dashboard() {
 
+    const [summary, setSummary] = useState(null);
+    const [detections, setDetections] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const [summary,setSummary] = useState(null);
-
-    const [detections,setDetections] = useState([]);
-
-    const [loading,setLoading] = useState(true);
-
-
-
-    useEffect(()=>{
-
+    useEffect(() => {
         fetchData();
+    }, []);
 
-    },[]);
+    const fetchData = async () => {
 
-
-
-    const fetchData = async()=>{
-
-
-        try{
-
+        try {
 
             const summaryResponse =
                 await apiClient.get("/analysis/summary");
 
-
             const detectionResponse =
                 await apiClient.get("/analysis/detections");
 
-
-
             setSummary(summaryResponse.data);
-
             setDetections(detectionResponse.data);
 
-
-
         }
-        catch(error){
+        catch (error) {
 
             console.error(error);
 
         }
-        finally{
+        finally {
 
             setLoading(false);
 
         }
 
+    };
+
+
+    const exportReport = (format) => {
+
+        window.open(
+            `http://localhost:5000/api/v1/analysis/export/${format}`,
+            "_blank"
+        );
 
     };
 
 
-
-    if(loading){
+    if (loading) {
 
         return (
 
@@ -82,37 +73,52 @@ function Dashboard() {
     }
 
 
-
     return (
 
         <div className="dashboard">
 
-
             <div className="dashboard-title">
 
-                <h1>
-                    SOC Dashboard
-                </h1>
+                <div>
 
+                    <h1>
+                        SOC Dashboard
+                    </h1>
 
-                <p>
-                    Security event monitoring and threat intelligence
-                </p>
+                    <p>
+                        Security event monitoring and threat intelligence
+                    </p>
 
+                </div>
+
+                <div className="export-buttons">
+
+                    <button
+                        className="export-btn"
+                        onClick={() => exportReport("csv")}
+                    >
+                        Export CSV
+                    </button>
+
+                    <button
+                        className="export-btn"
+                        onClick={() => exportReport("json")}
+                    >
+                        Export JSON
+                    </button>
+
+                </div>
 
             </div>
 
 
-
             {
                 summary &&
-                <SummaryCards summary={summary}/>
+                <SummaryCards summary={summary} />
             }
 
 
-
             <section>
-
 
                 <div className="section-header">
 
@@ -126,31 +132,22 @@ function Dashboard() {
 
                 </div>
 
-
-
                 <div className="dashboard-grid">
-
 
                     <SeverityChart
                         severity={summary.severity}
                     />
 
-
                     <AttackChart
                         attacks={summary.attack_types}
                     />
 
-
                 </div>
-
 
             </section>
 
 
-
-
             <section>
-
 
                 <div className="section-header">
 
@@ -164,21 +161,25 @@ function Dashboard() {
 
                 </div>
 
-
-
                 <DetectionTimeline
                     detections={detections}
                 />
 
+            </section>
+
+
+            {/* NEW Top Attackers Section */}
+
+            <section>
+
+                <TopAttackers
+                    sourceIps={summary.source_ips}
+                />
 
             </section>
 
 
-
-
-
             <section>
-
 
                 <div className="section-header">
 
@@ -188,22 +189,16 @@ function Dashboard() {
 
                 </div>
 
-
-
                 <DetectionTable
                     detections={detections}
                 />
 
-
             </section>
-
-
 
         </div>
 
     );
 
 }
-
 
 export default Dashboard;
