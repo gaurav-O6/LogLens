@@ -11,11 +11,13 @@ from app.services.upload_service import save_uploaded_log
 from app.services.processing_service import ProcessingService
 
 
+
 upload_bp = Blueprint(
     "upload",
     __name__,
     url_prefix="/api/v1/logs",
 )
+
 
 
 
@@ -30,7 +32,7 @@ def upload_log():
         ↓
     Save File
         ↓
-    Parse Logs
+    Parse Logs (streaming)
         ↓
     Save Logs
         ↓
@@ -40,6 +42,7 @@ def upload_log():
         ↓
     Return Summary
     """
+
 
 
     if "file" not in request.files:
@@ -52,7 +55,9 @@ def upload_log():
 
 
 
+
     file = request.files["file"]
+
 
 
     if file.filename == "":
@@ -61,15 +66,18 @@ def upload_log():
             {
                 "error": "No file selected."
             }
-        ),400
+        ), 400
+
+
 
 
 
     try:
 
-        # Save uploaded file
 
-        filename = save_uploaded_log(file)
+        filename = save_uploaded_log(
+            file
+        )
 
 
 
@@ -78,17 +86,21 @@ def upload_log():
         )
 
 
+
         file_path = upload_folder / filename
 
 
 
-        # Process file
 
         processor = ProcessingService()
+
+
 
         result = processor.process_file(
             file_path
         )
+
+
 
 
 
@@ -99,24 +111,30 @@ def upload_log():
                     "Log processed successfully.",
 
 
+
                 "filename":
                     filename,
 
 
+
                 "parsed_logs":
-                    len(result["parsed_logs"]),
+                    result["parsed_count"],
+
 
 
                 "detections":
-                    len(result["detections"]),
+                    result["detection_count"],
+
 
 
                 "summary":
-                    result["summary"]
+                    result["summary"],
 
             }
 
-        ),200
+        ), 200
+
+
 
 
 
@@ -127,7 +145,8 @@ def upload_log():
             {
                 "error": str(error)
             }
-        ),400
+        ), 400
+
 
 
 
@@ -137,10 +156,128 @@ def upload_log():
 
         return jsonify(
             {
+
                 "error":
                     "Processing failed.",
 
+
                 "details":
                     str(error)
+
             }
-        ),500
+
+        ), 500
+
+
+
+
+
+
+
+
+
+
+@upload_bp.route("/demo", methods=["GET"])
+def demo_log():
+    """
+    Process preloaded demo attack log.
+
+    Uses:
+    sample_logs/attack_test.log
+    """
+
+
+
+    try:
+
+
+
+        demo_file = (
+
+            Path(current_app.root_path)
+            .parent
+            .parent
+            / "sample_logs"
+            / "attack_test.log"
+
+        )
+
+
+
+
+        if not demo_file.exists():
+
+            return jsonify(
+                {
+                    "error":
+                        "Demo log file not found."
+                }
+            ), 404
+
+
+
+
+
+        processor = ProcessingService()
+
+
+
+        result = processor.process_file(
+            demo_file
+        )
+
+
+
+
+
+        return jsonify(
+            {
+
+                "message":
+                    "Demo log processed successfully.",
+
+
+
+                "filename":
+                    "attack_test.log",
+
+
+
+                "parsed_logs":
+                    result["parsed_count"],
+
+
+
+                "detections":
+                    result["detection_count"],
+
+
+
+                "summary":
+                    result["summary"]
+
+            }
+
+        ), 200
+
+
+
+
+
+    except Exception as error:
+
+
+        return jsonify(
+            {
+
+                "error":
+                    "Demo processing failed.",
+
+
+
+                "details":
+                    str(error)
+
+            }
+
+        ), 500

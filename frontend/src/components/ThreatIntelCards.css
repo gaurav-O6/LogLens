@@ -8,95 +8,200 @@
 
 }
 
+
 .intel-grid{
 
     display:grid;
 
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(4,1fr);
 
-    gap:18px;
+    gap:20px;
 
 }
 
+
+
 .intel-card{
+
+    position:relative;
+
+    overflow:hidden;
+
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:16px;
+
+    padding:22px;
+
+    min-height:130px;
 
     background:#111827;
 
     border:1px solid #30363d;
 
-    border-radius:14px;
-
-    padding:20px;
-
-    display:flex;
-
-    gap:16px;
-
-    align-items:flex-start;
+    border-radius:16px;
 
     transition:.25s ease;
 
-    min-height:105px;
-
 }
+
+
 
 .intel-card:hover{
 
-    border-color:#10a37f;
+    transform:translateY(-5px);
 
-    transform:translateY(-3px);
-
-    box-shadow:0 10px 30px rgba(16,163,127,.15);
+    box-shadow:
+        0 15px 35px rgba(0,0,0,.35);
 
 }
 
+
+
+.intel-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    top:0;
+
+    bottom:0;
+
+    width:5px;
+
+}
+
+
+
+.intel-card.red::before{
+
+    background:#ef4444;
+
+}
+
+
+.intel-card.orange::before{
+
+    background:#f97316;
+
+}
+
+
+.intel-card.blue::before{
+
+    background:#3b82f6;
+
+}
+
+
+.intel-card.purple::before{
+
+    background:#a855f7;
+
+}
+
+
+.intel-card.yellow::before{
+
+    background:#eab308;
+
+}
+
+
+.intel-card.green::before{
+
+    background:#22c55e;
+
+}
+
+
+.intel-card.cyan::before{
+
+    background:#06b6d4;
+
+}
+
+
+
 .intel-icon{
 
-    width:46px;
+    width:52px;
 
-    height:46px;
+    height:52px;
+
+    border-radius:14px;
 
     display:flex;
 
-    justify-content:center;
-
     align-items:center;
 
-    border-radius:12px;
+    justify-content:center;
 
     background:#0d1117;
 
-    color:#10a37f;
+    color:#58a6ff;
 
     flex-shrink:0;
 
 }
 
-.intel-card span{
 
-    display:block;
 
-    color:#8b949e;
+.intel-content{
 
-    font-size:13px;
-
-    margin-bottom:8px;
+    min-width:0;
 
 }
 
-.intel-card h3{
+
+
+.intel-content span{
+
+    color:#8b949e;
+
+    font-size:12px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
+
+}
+
+
+
+.intel-content h3{
+
+    margin:8px 0 6px;
 
     color:white;
 
     font-size:18px;
 
-    line-height:1.35;
+    font-weight:700;
 
     word-break:break-word;
 
 }
 
-@media(max-width:1100px){
+
+
+.intel-content p{
+
+    color:#8b949e;
+
+    font-size:13px;
+
+}
+
+
+
+@media(max-width:1200px){
+
 
     .intel-grid{
 
@@ -106,7 +211,10 @@
 
 }
 
+
+
 @media(max-width:700px){
+
 
     .intel-grid{
 

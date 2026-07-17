@@ -1,8 +1,11 @@
 import {
     Search,
+    X,
     ShieldAlert,
     Crosshair
 } from "lucide-react";
+
+import "./ThreatToolbar.css";
 
 
 function ThreatToolbar({
@@ -23,6 +26,7 @@ function ThreatToolbar({
 
             <div className="toolbar-search">
 
+
                 <Search size={18}/>
 
 
@@ -34,11 +38,35 @@ function ThreatToolbar({
 
                     value={searchTerm}
 
-                    onChange={(event) =>
-                        onSearchChange(event.target.value)
+                    onChange={(event)=>
+                        onSearchChange(
+                            event.target.value
+                        )
                     }
 
                 />
+
+
+                {
+                    searchTerm && (
+
+                        <button
+
+                            className="clear-search"
+
+                            onClick={() =>
+                                onSearchChange("")
+                            }
+
+                        >
+
+                            <X size={16}/>
+
+                        </button>
+
+                    )
+                }
+
 
             </div>
 
@@ -110,20 +138,20 @@ function ThreatToolbar({
                 >
 
                     <option value="All">
-
                         All Attack Types
-
                     </option>
-
 
 
                     {
                         attackOptions.map(
                             (attack)=>(
-                                
+
                                 <option
+
                                     key={attack}
+
                                     value={attack}
+
                                 >
 
                                     {attack}
@@ -139,7 +167,6 @@ function ThreatToolbar({
 
 
             </div>
-
 
 
         </div>

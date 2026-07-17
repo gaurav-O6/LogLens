@@ -13,8 +13,9 @@ from app.services.detection_service import save_detections
 
 class ProcessingService:
     """
-    Coordinates the complete log processing pipeline.
+    Coordinates streaming log processing pipeline.
     """
+
 
 
     def __init__(self):
@@ -29,32 +30,47 @@ class ProcessingService:
 
 
 
+
     def process_file(
         self,
         file_path: Path
     ) -> dict:
         """
-        Process uploaded log file.
+        Process log file using streaming.
+
+        Logs are processed line-by-line
+        without loading the complete file into memory.
         """
 
 
-        # Parse logs
-        parsed_logs = self.parser.parse_file(
-            file_path
-        )
+
+        parsed_count = 0
+
+        detection_count = 0
 
 
-        # Save raw logs
-        new_logs = save_logs(
-            parsed_logs
-        )
+        log_batch = []
+
+        detection_batch = []
 
 
-        detections = []
+
+        BATCH_SIZE = 500
 
 
-        # Run detection pipeline
-        for log_entry in parsed_logs:
+
+
+        for log_entry in self.parser.parse_file(file_path):
+
+
+            parsed_count += 1
+
+
+
+            log_batch.append(
+                log_entry
+            )
+
 
 
             threats = self.threat_detector.detect(
@@ -62,11 +78,18 @@ class ProcessingService:
             )
 
 
+
             if threats:
 
-                detections.extend(
-                    threats
-                )
+                for threat in threats:
+
+                    detection_batch.append(
+                        threat
+                    )
+
+                    self.aggregation_service.add_detection(
+                        threat
+                    )
 
 
 
@@ -77,37 +100,106 @@ class ProcessingService:
             )
 
 
+
             if brute_force:
 
-                detections.append(
+
+                detection_batch.append(
+                    brute_force
+                )
+
+
+                self.aggregation_service.add_detection(
                     brute_force
                 )
 
 
 
-        # Save detections with GeoIP enrichment
-        save_detections(
-            detections
-        )
+
+            if len(log_batch) >= BATCH_SIZE:
+
+
+                save_logs(
+                    log_batch
+                )
+
+
+                log_batch.clear()
+
+
+
+
+
+            if len(detection_batch) >= BATCH_SIZE:
+
+
+                save_detections(
+                    detection_batch
+                )
+
+
+                detection_count += len(
+                    detection_batch
+                )
+
+
+                detection_batch.clear()
+
+
+
+
+
+        # Save remaining logs
+
+        if log_batch:
+
+            save_logs(
+                log_batch
+            )
+
+
+
+
+
+        # Save remaining detections
+
+        if detection_batch:
+
+
+            save_detections(
+                detection_batch
+            )
+
+
+            detection_count += len(
+                detection_batch
+            )
+
+
 
 
 
         summary = (
-            self.aggregation_service.aggregate(
-                detections
-            )
+            self.aggregation_service.get_summary()
         )
+
+
 
 
 
         return {
 
-            "parsed_logs": parsed_logs,
 
-            "new_logs": len(new_logs),
+            "parsed_count":
+                parsed_count,
 
-            "detections": detections,
 
-            "summary": summary,
+            "detection_count":
+                detection_count,
+
+
+            "summary":
+                summary,
+
 
         }

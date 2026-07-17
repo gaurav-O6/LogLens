@@ -4,19 +4,27 @@
         "severity": "High",
         "patterns": [
             "'\\s*OR\\s*1=1",
-            "union\\s+select",
-            "drop\\s+table",
-            "--"
+            "UNION\\s+SELECT",
+            "DROP\\s+TABLE",
+            "INSERT\\s+INTO",
+            "UPDATE\\s+SET",
+            "DELETE\\s+FROM",
+            "information_schema",
+            "xp_cmdshell"
         ]
     },
     {
         "type": "Cross-Site Scripting (XSS)",
         "severity": "High",
         "patterns": [
-            "<script.*?>",
+            "<script",
+            "</script>",
             "javascript:",
-            "onerror\\s*=",
-            "onload\\s*="
+            "onerror=",
+            "onload=",
+            "alert\\(",
+            "<img",
+            "<svg"
         ]
     },
     {
@@ -24,7 +32,40 @@
         "severity": "Medium",
         "patterns": [
             "\\.\\./",
-            "/etc/passwd"
+            "\\.\\.\\\\",
+            "/etc/passwd",
+            "/etc/shadow",
+            "boot\\.ini",
+            "win\\.ini",
+            "system32"
+        ]
+    },
+    {
+        "type": "Command Injection",
+        "severity": "High",
+        "patterns": [
+            ";\\s*cat",
+            ";\\s*ls",
+            ";\\s*whoami",
+            "\\|\\s*cat",
+            "\\|\\s*bash",
+            "\\|\\s*sh",
+            "&&\\s*cat",
+            "&&\\s*whoami"
+        ]
+    },
+    {
+        "type": "Sensitive File Access",
+        "severity": "Low",
+        "patterns": [
+            "\\.env",
+            "robots\\.txt",
+            "sitemap\\.xml",
+            "phpinfo\\.php",
+            "server-status",
+            "README",
+            "CHANGELOG",
+            "composer\\.json"
         ]
     }
 ]

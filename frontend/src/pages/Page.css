@@ -1,87 +1,98 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
-/* =========================================================
-   SHARED PAGE LAYOUT
-========================================================= */
+/* ==========================================================
+   GLOBAL RESET
+========================================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,
+body,
+#root{
+    height:100%;
+    font-family:"Inter",sans-serif;
+}
+
+button{
+    border:none;
+    outline:none;
+    cursor:pointer;
+    font:inherit;
+}
+
+input,
+select{
+    outline:none;
+    border:none;
+    font:inherit;
+}
+
+a{
+    color:inherit;
+    text-decoration:none;
+}
+
+img{
+    max-width:100%;
+    display:block;
+}
+
+/* ==========================================================
+   PAGE LAYOUT
+========================================================== */
 
 .page{
-
-    min-height:100%;
-
     display:flex;
-
     flex-direction:column;
-
     gap:28px;
-
+    min-height:100%;
 }
-
-
 
 .page-heading{
-
     display:flex;
-
     flex-direction:column;
-
     gap:8px;
-
 }
-
-
 
 .page-heading h1{
-
-    color:#ffffff;
-
+    color:#fff;
     font-size:32px;
-
     font-weight:700;
-
+    letter-spacing:-.02em;
 }
-
-
 
 .page-heading p{
-
     color:#8b949e;
-
     font-size:15px;
-
+    line-height:1.6;
 }
 
-
-
-/* =========================================================
+/* ==========================================================
    UPLOAD PAGE
-========================================================= */
+========================================================== */
 
 .page>.upload-box{
-
     align-self:center;
-
 }
 
-
-
 .upload-box{
-
     width:650px;
-
     max-width:100%;
 
     background:#111827;
 
-    border:1px solid #1f2937;
+    border:1px solid #30363d;
 
-    border-radius:16px;
+    border-radius:18px;
 
-    padding:40px;
+    padding:42px;
 
     display:flex;
-
     flex-direction:column;
-
     align-items:center;
 
     text-align:center;
@@ -89,122 +100,81 @@
     gap:22px;
 
     box-shadow:
-
-        0 10px 35px rgba(0,0,0,.35);
-
+        0 12px 35px rgba(0,0,0,.35);
 }
-
-
 
 .upload-box svg{
-
     color:#10a37f;
-
 }
-
-
 
 .upload-box h2{
-
-    color:#ffffff;
-
+    color:#fff;
     font-size:24px;
-
+    font-weight:700;
 }
-
-
 
 .upload-box p{
-
     color:#8b949e;
-
+    line-height:1.6;
 }
 
-
-
 .file-drop{
-
     width:100%;
 
-    padding:36px;
+    padding:38px;
 
     border:2px dashed #30363d;
 
     border-radius:14px;
 
-    cursor:pointer;
-
-    transition:.2s;
-
     background:#0d1117;
 
+    transition:.25s ease;
+
+    cursor:pointer;
 }
-
-
 
 .file-drop:hover{
-
     border-color:#10a37f;
-
     background:#11161d;
-
 }
-
-
 
 .file-drop input{
-
     display:none;
-
 }
-
-
 
 .file-drop span{
-
     color:#c9d1d9;
-
 }
 
-
-
 .upload-box button{
-
     width:100%;
 
     padding:14px;
 
-    border-radius:10px;
+    border-radius:12px;
 
     background:#10a37f;
 
-    color:white;
+    color:#fff;
 
     font-weight:600;
 
     transition:.2s;
-
 }
-
-
 
 .upload-box button:hover{
-
     filter:brightness(1.08);
-
 }
-
-
 
 .upload-box button:disabled{
-
-    opacity:.6;
-
+    opacity:.55;
     cursor:not-allowed;
-
 }
 
-
+/* ==========================================================
+   UPLOAD RESULT
+========================================================== */
 
 .upload-result{
 
@@ -212,16 +182,19 @@
 
     display:flex;
 
-    gap:16px;
+    align-items:center;
 
-    align-items:flex-start;
+    justify-content:center;
+
+    gap:16px;
 
     padding:18px;
 
     border-radius:12px;
 
-}
+    text-align:center;
 
+}
 
 
 .upload-result.success{
@@ -232,8 +205,45 @@
 
     color:#22c55e;
 
+
+    flex-direction:column;
+
+    gap:12px;
+
 }
 
+
+.upload-result.success svg{
+
+    width:32px;
+
+    height:32px;
+
+}
+
+
+.upload-result.success > div{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+}
+
+
+.upload-result.success button{
+
+    margin-top:12px;
+
+    width:220px;
+
+}
 
 
 .upload-result.error{
@@ -246,187 +256,144 @@
 
 }
 
-
-
-/* =========================================================
-   SHARED DASHBOARD CARDS
-========================================================= */
+/* ==========================================================
+   DASHBOARD STATS
+========================================================== */
 
 .stats-container{
-
     display:grid;
-
     grid-template-columns:repeat(3,1fr);
-
     gap:20px;
-
 }
 
-
-
 .stat-card{
-
     background:#111827;
 
-    border:1px solid #1f2937;
+    border:1px solid #30363d;
 
-    border-radius:16px;
+    border-radius:18px;
 
     padding:22px;
 
     display:flex;
-
+    align-items:center;
     gap:18px;
 
-    align-items:center;
-
-    transition:.2s;
-
+    transition:.2s ease;
 }
-
-
 
 .stat-card:hover{
-
     transform:translateY(-2px);
-
     border-color:#10a37f;
-
 }
-
-
 
 .stat-card svg{
-
     color:#10a37f;
-
 }
-
-
 
 .stat-card h3{
-
     color:#8b949e;
-
     font-size:14px;
-
     font-weight:500;
-
 }
 
-
-
 .stat-card p{
+    margin-top:5px;
 
-    color:#ffffff;
+    color:#fff;
 
     font-size:28px;
 
     font-weight:700;
-
-    margin-top:6px;
-
 }
 
-/* =========================================================
+/* ==========================================================
    THREAT CENTER
-========================================================= */
+========================================================== */
 
 .threat-page{
-
     gap:24px;
-
 }
-
-
 
 .threat-page .page-heading{
-
     align-items:flex-start;
-
 }
 
-
-
-.threat-workspace{
-
-    width:100%;
-
-}
-
-
-
-/* =========================================================
+/* ==========================================================
    THREAT TOOLBAR
-========================================================= */
+========================================================== */
 
 .threat-toolbar{
 
     display:flex;
-
-    gap:16px;
-
     align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
+
+    padding:18px;
 
     background:#111827;
 
-    border:1px solid #1f2937;
+    border:1px solid #30363d;
 
-    border-radius:16px;
-
-    padding:16px;
-
+    border-radius:18px;
 }
-
-
 
 .toolbar-search{
 
     flex:1;
+    min-width:320px;
 
     display:flex;
-
     align-items:center;
-
     gap:12px;
+
+    padding:0 16px;
 
     background:#0d1117;
 
     border:1px solid #30363d;
 
-    border-radius:10px;
+    border-radius:12px;
 
-    padding:0 16px;
+    transition:.2s ease;
+}
 
-    transition:.2s;
+.toolbar-search:hover{
+
+    border-color:#484f58;
 
 }
 
+.toolbar-search:focus-within{
 
+    border-color:#10a37f;
+
+    box-shadow:0 0 0 3px rgba(16,163,127,.12);
+
+}
 
 .toolbar-search svg{
 
     color:#8b949e;
 
+    flex-shrink:0;
+
 }
-
-
 
 .toolbar-search input{
 
     flex:1;
 
+    height:48px;
+
     background:transparent;
 
-    color:white;
+    color:#ffffff;
 
-    border:none;
-
-    padding:14px 0;
+    font-size:14px;
 
 }
-
-
 
 .toolbar-search input::placeholder{
 
@@ -434,459 +401,26 @@
 
 }
 
+.clear-search{
 
+    width:28px;
 
-.toolbar-filter{
+    height:28px;
+
+    border-radius:50%;
 
     display:flex;
-
     align-items:center;
-
-    gap:10px;
-
-    background:#0d1117;
-
-    border:1px solid #30363d;
-
-    border-radius:10px;
-
-    padding:0 14px;
-
-    transition:.2s;
-
-}
-
-
-
-.toolbar-filter svg{
-
-    color:#10a37f;
-
-}
-
-
-
-.toolbar-filter select{
+    justify-content:center;
 
     background:transparent;
 
-    color:white;
-
-    border:none;
-
-    padding:14px 4px;
-
-    cursor:pointer;
-
-}
-
-
-
-.toolbar-filter option{
-
-    background:#111827;
-
-    color:white;
-
-}
-
-
-
-.toolbar-search:focus-within,
-
-.toolbar-filter:focus-within{
-
-    border-color:#10a37f;
-
-}
-
-
-
-/* =========================================================
-   DETECTION TABLE
-========================================================= */
-
-.table-container{
-
-    width:100%;
-
-    background:#111827;
-
-    border:1px solid #1f2937;
-
-    border-radius:16px;
-
-    overflow:hidden;
-
-}
-
-
-
-.table-header{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:22px;
-
-    border-bottom:1px solid #1f2937;
-
-}
-
-
-
-.table-title h2{
-
-    color:white;
-
-    font-size:18px;
-
-}
-
-
-
-.table-title p{
-
-    color:#8b949e;
-
-    margin-top:5px;
-
-    font-size:14px;
-
-}
-
-
-
-.detection-count{
-
-    display:flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-}
-
-
-
-.detection-count strong{
-
-    color:#10a37f;
-
-    font-size:26px;
-
-}
-
-
-
-.detection-count span{
-
-    color:#8b949e;
-
-    font-size:12px;
-
-}
-
-
-
-.table-wrapper{
-
-    overflow:auto;
-
-}
-
-
-
-table{
-
-    width:100%;
-
-    border-collapse:collapse;
-
-}
-
-
-
-thead{
-
-    background:#0d1117;
-
-}
-
-
-
-th{
-
-    text-align:left;
-
-    padding:15px;
-
-    color:#8b949e;
-
-    font-size:13px;
-
-    font-weight:600;
-
-}
-
-
-
-td{
-
-    padding:15px;
-
-    color:#e6edf3;
-
-    border-top:1px solid #1f2937;
-
-    font-size:14px;
-
-}
-
-
-
-.clickable-row{
-
-    cursor:pointer;
-
-    transition:.15s;
-
-}
-
-
-
-.clickable-row:hover{
-
-    background:#18202c;
-
-}
-
-
-
-.attack-name{
-
-    color:#10a37f;
-
-    font-weight:600;
-
-}
-
-
-
-.ip-address{
-
-    font-family:monospace;
-
-}
-
-
-
-.pattern-cell{
-
-    max-width:260px;
-
-    overflow:hidden;
-
-    text-overflow:ellipsis;
-
-    white-space:nowrap;
-
-}
-
-
-
-.empty-table{
-
-    text-align:center;
-
-    padding:40px;
-
-    color:#8b949e;
-
-}
-
-
-
-/* =========================================================
-   SEVERITY BADGES
-========================================================= */
-
-.severity-badge{
-
-    display:inline-flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    min-width:72px;
-
-    padding:6px 12px;
-
-    border-radius:999px;
-
-    font-size:12px;
-
-    font-weight:700;
-
-}
-
-
-
-.severity-badge.high{
-
-    background:rgba(239,68,68,.15);
-
-    color:#ef4444;
-
-}
-
-
-
-.severity-badge.medium{
-
-    background:rgba(245,158,11,.15);
-
-    color:#f59e0b;
-
-}
-
-
-
-.severity-badge.low{
-
-    background:rgba(34,197,94,.15);
-
-    color:#22c55e;
-
-}
-
-/* =========================================================
-   INVESTIGATION PANEL
-========================================================= */
-
-.investigation-panel{
-
-    position:fixed;
-
-    top:88px;
-
-    right:24px;
-
-    width:420px;
-
-    height:calc(100vh - 112px);
-
-    background:#111827;
-
-    border-left:1px solid #1f2937;
-
-    border-radius:16px 0 0 16px;
-
-    box-shadow:-18px 0 40px rgba(0,0,0,.45);
-
-    overflow-y:auto;
-
-    z-index:1000;
-
-    animation:panelSlideIn .22s ease-out;
-
-}
-
-
-
-@keyframes panelSlideIn{
-
-    from{
-
-        transform:translateX(100%);
-
-        opacity:0;
-
-    }
-
-    to{
-
-        transform:translateX(0);
-
-        opacity:1;
-
-    }
-
-}
-
-
-
-.panel-header{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:flex-start;
-
-    padding:22px;
-
-    border-bottom:1px solid #1f2937;
-
-    position:sticky;
-
-    top:0;
-
-    background:#111827;
-
-    z-index:5;
-
-}
-
-
-
-.panel-header h2{
-
-    color:#ffffff;
-
-    font-size:20px;
-
-    font-weight:700;
-
-}
-
-
-
-.panel-header p{
-
-    color:#8b949e;
-
-    font-size:13px;
-
-    margin-top:4px;
-
-}
-
-
-
-.panel-header button{
-
-    width:36px;
-
-    height:36px;
-
-    border-radius:8px;
-
-    background:#0d1117;
-
     color:#8b949e;
 
     transition:.2s;
-
 }
 
-
-
-.panel-header button:hover{
+.clear-search:hover{
 
     background:#1f2937;
 
@@ -894,177 +428,178 @@ td{
 
 }
 
+/* ==========================================================
+   FILTERS
+========================================================== */
 
-
-.panel-content{
-
-    padding:22px;
-
-}
-
-
-
-/* =========================================================
-   RISK BANNER
-========================================================= */
-
-.risk-banner{
+.toolbar-filter{
 
     display:flex;
-
     align-items:center;
+    gap:10px;
 
-    gap:14px;
+    height:50px;
 
-    padding:16px;
-
-    margin-bottom:24px;
-
-    border-radius:12px;
-
-    background:rgba(239,68,68,.10);
-
-    border:1px solid rgba(239,68,68,.25);
-
-}
-
-
-
-.risk-banner svg{
-
-    color:#ef4444;
-
-}
-
-
-
-.risk-banner span{
-
-    display:block;
-
-    color:#8b949e;
-
-    font-size:12px;
-
-}
-
-
-
-.risk-banner strong{
-
-    color:#ef4444;
-
-    font-size:20px;
-
-}
-
-
-
-/* =========================================================
-   INVESTIGATION SECTIONS
-========================================================= */
-
-.investigation-section{
-
-    padding:18px 0;
-
-    border-top:1px solid #1f2937;
-
-}
-
-
-
-.investigation-section:first-child{
-
-    border-top:none;
-
-    padding-top:0;
-
-}
-
-
-
-.investigation-section h3{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:8px;
-
-    margin-bottom:14px;
-
-    color:#ffffff;
-
-    font-size:15px;
-
-}
-
-
-
-.investigation-section p{
-
-    margin-bottom:10px;
-
-    color:#c9d1d9;
-
-    line-height:1.6;
-
-}
-
-
-
-.location-line{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:8px;
-
-}
-
-
-
-.investigation-section strong{
-
-    color:#ffffff;
-
-}
-
-
-
-.investigation-section pre{
-
-    margin-top:10px;
-
-    padding:14px;
+    padding:0 14px;
 
     background:#0d1117;
 
-    border:1px solid #1f2937;
+    border:1px solid #30363d;
 
-    border-radius:10px;
+    border-radius:12px;
 
-    color:#8b949e;
+    transition:.2s ease;
+}
 
-    font-size:12px;
+.toolbar-filter:hover{
 
-    overflow:auto;
-
-    white-space:pre-wrap;
-
-    word-break:break-word;
+    border-color:#484f58;
 
 }
 
+.toolbar-filter:focus-within{
 
+    border-color:#10a37f;
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
+    box-shadow:0 0 0 3px rgba(16,163,127,.12);
 
-@media (max-width:1100px){
+}
+
+.toolbar-filter svg{
+
+    color:#10a37f;
+
+    flex-shrink:0;
+
+}
+
+.toolbar-filter select{
+
+    background:transparent;
+
+    color:#ffffff;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+    min-width:150px;
+
+}
+
+.toolbar-filter option{
+
+    background:#111827;
+
+    color:#ffffff;
+
+}
+
+/* ==========================================================
+   EXPORT BUTTONS
+========================================================== */
+
+.export-buttons{
+
+    display:flex;
+
+    gap:10px;
+
+    margin-left:auto;
+
+}
+
+.export-btn{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    height:48px;
+
+    padding:0 18px;
+
+    background:#161b22;
+
+    color:#e6edf3;
+
+    border:1px solid #30363d;
+
+    border-radius:12px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    transition:.2s ease;
+}
+
+.export-btn:hover{
+
+    background:#1f2937;
+
+    border-color:#10a37f;
+
+    transform:translateY(-1px);
+
+}
+
+/* ==========================================================
+   SHARED CARD
+========================================================== */
+
+.card{
+
+    background:#111827;
+
+    border:1px solid #30363d;
+
+    border-radius:18px;
+
+}
+
+.card-header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:22px;
+
+    border-bottom:1px solid #30363d;
+}
+
+.card-title{
+
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+
+}
+
+.card-title h2{
+
+    color:#ffffff;
+
+    font-size:18px;
+
+    font-weight:700;
+
+}
+
+.card-title p{
+
+    color:#8b949e;
+
+    font-size:14px;
+
+}
+
+/* ==========================================================
+   RESPONSIVE (PART 1)
+========================================================== */
+
+@media(max-width:1100px){
 
     .stats-container{
 
@@ -1080,7 +615,13 @@ td{
 
     }
 
-    .toolbar-search,
+    .toolbar-search{
+
+        width:100%;
+
+        min-width:unset;
+
+    }
 
     .toolbar-filter{
 
@@ -1088,23 +629,31 @@ td{
 
     }
 
-    .investigation-panel{
+    .toolbar-filter select{
 
         width:100%;
 
-        right:0;
+    }
 
-        top:0;
+    .export-buttons{
 
-        height:100vh;
+        width:100%;
 
-        border-radius:0;
+        margin-left:0;
+
+    }
+
+    .export-btn{
+
+        flex:1;
+
+        justify-content:center;
 
     }
 
 }
 
-@media (max-width:768px){
+@media(max-width:768px){
 
     .page{
 
@@ -1124,6 +673,428 @@ td{
 
     }
 
+}
+
+/* ==========================================================
+   THREAT WORKSPACE
+========================================================== */
+
+.threat-workspace{
+
+    display:grid;
+
+    grid-template-columns:minmax(0,1fr) 420px;
+
+    gap:20px;
+
+    align-items:stretch;
+
+}
+
+.threat-list{
+
+    min-width:0;
+
+}
+
+.investigation-area{
+
+    display:flex;
+
+    flex-direction:column;
+
+    min-width:0;
+
+    align-self:start;
+
+}
+
+/* ==========================================================
+   DETECTION TABLE
+========================================================== */
+
+.table-container{
+
+    display:flex;
+
+    flex-direction:column;
+
+    height:720px;
+
+    background:#111827;
+
+    border:1px solid #30363d;
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+}
+
+.table-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:22px 24px;
+
+    border-bottom:1px solid #30363d;
+
+    flex-shrink:0;
+
+}
+
+.table-title{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+}
+
+.table-title h2{
+
+    color:#ffffff;
+
+    font-size:18px;
+
+    font-weight:700;
+
+}
+
+.table-title p{
+
+    color:#8b949e;
+
+    font-size:14px;
+
+}
+
+.detection-count{
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    min-width:82px;
+
+}
+
+.detection-count strong{
+
+    color:#10a37f;
+
+    font-size:28px;
+
+    font-weight:700;
+
+}
+
+.detection-count span{
+
+    color:#8b949e;
+
+    font-size:12px;
+
+    margin-top:4px;
+
+}
+
+/* ==========================================================
+   TABLE SCROLL AREA
+========================================================== */
+
+.table-wrapper{
+
+    flex:1;
+
+    overflow-y:auto;
+
+    overflow-x:auto;
+
+    scrollbar-width:thin;
+
+    scrollbar-color:#30363d transparent;
+
+}
+
+.table-wrapper::-webkit-scrollbar{
+
+    width:6px;
+
+    height:6px;
+
+}
+
+.table-wrapper::-webkit-scrollbar-track{
+
+    background:transparent;
+
+}
+
+.table-wrapper::-webkit-scrollbar-thumb{
+
+    background:#30363d;
+
+    border-radius:999px;
+
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover{
+
+    background:#4b5563;
+
+}
+
+/* ==========================================================
+   TABLE
+========================================================== */
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+thead{
+
+    position:sticky;
+
+    top:0;
+
+    z-index:5;
+
+    background:#0d1117;
+
+}
+
+th{
+
+    padding:16px;
+
+    text-align:left;
+
+    color:#8b949e;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    letter-spacing:.02em;
+
+    border-bottom:1px solid #30363d;
+
+}
+
+td{
+
+    padding:16px;
+
+    color:#e6edf3;
+
+    font-size:14px;
+
+    border-bottom:1px solid #20252d;
+
+    vertical-align:middle;
+
+}
+
+.clickable-row{
+
+    transition:
+        background .18s ease,
+        transform .18s ease;
+
+    cursor:pointer;
+
+}
+
+.clickable-row:hover{
+
+    background:#18202c;
+
+}
+
+/* ==========================================================
+   TABLE CELL STYLES
+========================================================== */
+
+.attack-name{
+
+    color:#10a37f;
+
+    font-weight:600;
+
+}
+
+.ip-address{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+    font-family:Consolas, monospace;
+
+}
+
+.private-ip-badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    width:max-content;
+
+    padding:3px 8px;
+
+    border-radius:999px;
+
+    background:rgba(59,130,246,.12);
+
+    color:#60a5fa;
+
+    font-size:11px;
+
+    font-weight:600;
+
+}
+
+.pattern-cell{
+
+    max-width:240px;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
+
+    color:#9ca3af;
+
+}
+
+/* ==========================================================
+   SEVERITY BADGES
+========================================================== */
+
+.severity-badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:78px;
+
+    padding:6px 12px;
+
+    border-radius:999px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+}
+
+.severity-badge.high{
+
+    color:#ef4444;
+
+    background:rgba(239,68,68,.14);
+
+}
+
+.severity-badge.medium{
+
+    color:#f59e0b;
+
+    background:rgba(245,158,11,.14);
+
+}
+
+.severity-badge.low{
+
+    color:#22c55e;
+
+    background:rgba(34,197,94,.14);
+
+}
+
+/* ==========================================================
+   ROW STATES
+========================================================== */
+
+.clickable-row:active{
+
+    transform:scale(.997);
+
+}
+
+.clickable-row.selected{
+
+    background:rgba(16,163,127,.12);
+
+}
+
+.clickable-row.selected td{
+
+    border-color:rgba(16,163,127,.25);
+
+}
+
+/* ==========================================================
+   EMPTY TABLE
+========================================================== */
+
+.empty-table{
+
+    padding:70px 20px;
+
+    text-align:center;
+
+    color:#8b949e;
+
+    font-size:15px;
+
+}
+
+/* ==========================================================
+   TABLE RESPONSIVE
+========================================================== */
+
+@media(max-width:1200px){
+
+    .threat-workspace{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .investigation-area{
+
+        margin-top:20px;
+
+    }
+
+}
+
+@media(max-width:768px){
+
     .table-header{
 
         flex-direction:column;
@@ -1135,11 +1106,711 @@ td{
     }
 
     th,
-
     td{
 
         padding:12px;
 
+        font-size:13px;
+
     }
+
+    .pattern-cell{
+
+        max-width:150px;
+
+    }
+
+}
+
+/* ==========================================================
+   INVESTIGATION PANEL
+========================================================== */
+
+.investigation-panel{
+
+    display:flex;
+    flex-direction:column;
+
+    width:100%;
+    height:720px;
+    margin:0;
+    align-self:start;
+
+    background:#111827;
+
+    border:1px solid #30363d;
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+    box-shadow:
+        0 12px 30px rgba(0,0,0,.25);
+
+}
+
+/* ==========================================================
+   PANEL HEADER
+========================================================== */
+
+.panel-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:16px;
+
+    padding:22px;
+
+    background:#0d1117;
+
+    border-bottom:1px solid #30363d;
+
+    flex-shrink:0;
+
+}
+
+.incident-title{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+.incident-title svg{
+
+    color:#ef4444;
+
+    flex-shrink:0;
+
+}
+
+.panel-header h2{
+
+    color:#ffffff;
+
+    font-size:20px;
+
+    font-weight:700;
+
+    line-height:1.2;
+
+}
+
+.panel-header p{
+
+    margin-top:5px;
+
+    color:#8b949e;
+
+    font-size:13px;
+
+}
+
+.panel-header button{
+
+    width:38px;
+
+    height:38px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:10px;
+
+    background:#161b22;
+
+    color:#8b949e;
+
+    border:1px solid #30363d;
+
+    transition:.2s ease;
+
+    flex-shrink:0;
+
+}
+
+.panel-header button:hover{
+
+    color:#ffffff;
+
+    border-color:#10a37f;
+
+    background:#1f2937;
+
+}
+
+/* ==========================================================
+   PANEL BODY
+========================================================== */
+
+.investigation-body{
+
+    flex:1;
+
+    overflow-y:auto;
+
+    padding:18px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+    scrollbar-width:thin;
+
+    scrollbar-color:#30363d transparent;
+
+}
+
+.investigation-body::-webkit-scrollbar{
+
+    width:6px;
+
+}
+
+.investigation-body::-webkit-scrollbar-track{
+
+    background:transparent;
+
+}
+
+.investigation-body::-webkit-scrollbar-thumb{
+
+    background:#30363d;
+
+    border-radius:999px;
+
+}
+
+.investigation-body::-webkit-scrollbar-thumb:hover{
+
+    background:#4b5563;
+
+}
+
+/* ==========================================================
+   SEVERITY BANNER
+========================================================== */
+
+.threat-banner{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
+
+    padding:18px;
+
+    border-radius:14px;
+
+    border:1px solid;
+
+}
+
+.threat-banner svg{
+
+    width:30px;
+
+    height:30px;
+
+    flex-shrink:0;
+
+}
+
+.threat-banner span{
+
+    display:block;
+
+    color:#8b949e;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    letter-spacing:.04em;
+
+    text-transform:uppercase;
+
+}
+
+.threat-banner strong{
+
+    display:block;
+
+    margin-top:4px;
+
+    font-size:22px;
+
+    font-weight:700;
+
+}
+
+.threat-banner.high{
+
+    background:rgba(239,68,68,.12);
+
+    border-color:rgba(239,68,68,.30);
+
+}
+
+.threat-banner.high svg,
+.threat-banner.high strong{
+
+    color:#ef4444;
+
+}
+
+.threat-banner.medium{
+
+    background:rgba(245,158,11,.12);
+
+    border-color:rgba(245,158,11,.30);
+
+}
+
+.threat-banner.medium svg,
+.threat-banner.medium strong{
+
+    color:#f59e0b;
+
+}
+
+.threat-banner.low{
+
+    background:rgba(34,197,94,.12);
+
+    border-color:rgba(34,197,94,.30);
+
+}
+
+.threat-banner.low svg,
+.threat-banner.low strong{
+
+    color:#22c55e;
+
+}
+
+/* =========================================================
+   INVESTIGATION CARDS
+========================================================= */
+
+.investigation-card{
+    background:#0d1117;
+    border:1px solid #30363d;
+    border-radius:14px;
+    padding:18px;
+    transition:.2s;
+}
+
+.investigation-card:hover{
+    border-color:#10a37f;
+}
+
+.investigation-card h3{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+    color:#ffffff;
+    font-size:15px;
+    font-weight:600;
+}
+
+.investigation-card h3 svg{
+    color:#10a37f;
+}
+
+
+
+/* =========================================================
+   INFO GRID
+========================================================= */
+
+.info-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+}
+
+.info-item{
+    background:#161b22;
+    border:1px solid #30363d;
+    border-radius:12px;
+    padding:14px;
+}
+
+.info-item span{
+    display:block;
+    color:#8b949e;
+    font-size:12px;
+    margin-bottom:6px;
+}
+
+.info-item strong{
+    display:block;
+    color:#ffffff;
+    font-size:14px;
+    word-break:break-word;
+}
+
+
+
+/* =========================================================
+   SOURCE INFORMATION
+========================================================= */
+
+.info-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 0;
+    color:#d1d5db;
+    border-bottom:1px solid rgba(48,54,61,.45);
+}
+
+.info-row:last-child{
+    border-bottom:none;
+}
+
+.info-row svg{
+    color:#10a37f;
+    flex-shrink:0;
+}
+
+
+
+/* =========================================================
+   HTTP REQUEST
+========================================================= */
+
+.endpoint{
+    margin-top:16px;
+    padding:14px;
+    background:#161b22;
+    border:1px solid #30363d;
+    border-radius:12px;
+}
+
+.endpoint span{
+    display:block;
+    color:#8b949e;
+    font-size:12px;
+}
+
+.endpoint strong{
+    display:block;
+    margin-top:6px;
+    color:#ffffff;
+    word-break:break-word;
+}
+
+
+
+/* =========================================================
+   RAW EVENT
+========================================================= */
+
+.investigation-card pre{
+    margin:0;
+    padding:16px;
+    background:#05080d;
+    border:1px solid #30363d;
+    border-radius:12px;
+    color:#9ca3af;
+    font-size:12px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    word-break:break-word;
+    overflow:auto;
+}
+
+.investigation-card pre::-webkit-scrollbar{
+    width:5px;
+}
+
+.investigation-card pre::-webkit-scrollbar-thumb{
+    background:#30363d;
+    border-radius:10px;
+}
+
+
+
+/* =========================================================
+   EMPTY INVESTIGATION
+========================================================= */
+
+.empty-investigation{
+    width:100%;
+    height:720px;
+    margin:0;
+    align-self:start;
+    background:#111827;
+    border:1px dashed #30363d;
+    border-radius:18px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:40px;
+}
+
+.empty-investigation svg{
+    color:#10a37f;
+    margin-bottom:20px;
+}
+
+.empty-investigation h3{
+    color:#ffffff;
+    font-size:20px;
+    margin-bottom:10px;
+}
+
+.empty-investigation p{
+    max-width:280px;
+    color:#8b949e;
+    line-height:1.6;
+}
+
+/* =========================================================
+   SCROLLBAR STYLING
+========================================================= */
+
+.table-wrapper,
+.investigation-body{
+    scrollbar-width:thin;
+    scrollbar-color:#30363d transparent;
+}
+
+.table-wrapper::-webkit-scrollbar,
+.investigation-body::-webkit-scrollbar{
+    width:5px;
+}
+
+.table-wrapper::-webkit-scrollbar-track,
+.investigation-body::-webkit-scrollbar-track{
+    background:transparent;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb,
+.investigation-body::-webkit-scrollbar-thumb{
+    background:#30363d;
+    border-radius:999px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover,
+.investigation-body::-webkit-scrollbar-thumb:hover{
+    background:#4b5563;
+}
+
+
+
+/* =========================================================
+   TRANSITIONS
+========================================================= */
+
+.table-container,
+.investigation-panel,
+.stat-card,
+.investigation-card,
+.toolbar-search,
+.toolbar-filter{
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width:1200px){
+
+    .threat-workspace{
+        grid-template-columns:1fr;
+    }
+
+    .investigation-area{
+        margin-top:20px;
+    }
+
+    .table-container,
+    .investigation-panel,
+    .empty-investigation{
+        height:650px;
+    }
+}
+
+
+
+@media (max-width:992px){
+
+    .stats-container{
+        grid-template-columns:1fr;
+    }
+
+    .threat-toolbar{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .toolbar-search,
+    .toolbar-filter{
+        width:100%;
+    }
+
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+
+
+@media (max-width:768px){
+
+    .page{
+        gap:20px;
+    }
+
+    .page-heading h1{
+        font-size:28px;
+    }
+
+    .table-header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:14px;
+    }
+
+    .table-container,
+    .investigation-panel,
+    .empty-investigation{
+        height:auto;
+        min-height:520px;
+    }
+
+    .panel-header{
+        padding:18px;
+    }
+
+    .investigation-body{
+        padding:16px;
+    }
+
+    th,
+    td{
+        padding:12px;
+    }
+}
+
+
+
+@media (max-width:576px){
+
+    .page-heading h1{
+        font-size:24px;
+    }
+
+    .threat-toolbar{
+        padding:14px;
+    }
+
+    .table-title h2{
+        font-size:16px;
+    }
+
+    .panel-header h2{
+        font-size:18px;
+    }
+
+    .threat-banner strong{
+        font-size:18px;
+    }
+
+    .investigation-card{
+        padding:14px;
+    }
+}
+
+
+.info-row button{
+
+    margin-left:auto;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:28px;
+
+    height:28px;
+
+    border-radius:8px;
+
+    background:#161b22;
+
+    color:#8b949e;
+
+    border:1px solid #30363d;
+
+}
+
+
+.info-row button:hover{
+
+    color:white;
+
+    border-color:#10a37f;
+
+}
+
+.info-row button{
+
+    margin-left:auto;
+
+    background:#161b22;
+
+    border:1px solid #30363d;
+
+    color:#8b949e;
+
+    width:28px;
+
+    height:28px;
+
+    border-radius:8px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+
+.info-row button:hover{
+
+    color:white;
+
+    border-color:#10a37f;
 
 }

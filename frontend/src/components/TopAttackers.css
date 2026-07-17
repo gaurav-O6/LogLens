@@ -1,34 +1,40 @@
-.top-attackers {
+.top-attackers{
 
     background:#111827;
 
     border:1px solid #30363d;
 
-    border-radius:14px;
+    border-radius:16px;
 
     overflow:hidden;
 
 }
 
-.top-attackers-header {
 
-    padding:18px 20px;
+
+.top-attackers-header{
+
+    padding:22px;
 
     border-bottom:1px solid #30363d;
 
 }
 
-.top-attackers-header h2 {
+
+
+.top-attackers-header h2{
 
     color:white;
 
-    font-size:18px;
+    font-size:20px;
 
     margin-bottom:6px;
 
 }
 
-.top-attackers-header p {
+
+
+.top-attackers-header p{
 
     color:#8b949e;
 
@@ -36,52 +42,192 @@
 
 }
 
-.top-attackers-table {
 
-    width:100%;
 
-    border-collapse:collapse;
+.attacker-list{
 
-}
+    display:flex;
 
-.top-attackers-table th {
-
-    background:#0d1117;
-
-    color:#8b949e;
+    flex-direction:column;
 
 }
 
-.top-attackers-table td {
 
-    padding:15px 20px;
 
-    border-top:1px solid #21262d;
+.attacker-row{
 
-    color:#e6edf3;
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+    padding:18px 22px;
+
+    border-bottom:1px solid #21262d;
+
+    transition:.25s ease;
 
 }
 
-.top-attackers-table tbody tr:hover {
+
+
+.attacker-row:hover{
 
     background:#161b22;
 
 }
 
-.attacker-ip {
+
+
+.attacker-row.top-threat{
+
+    border-left:4px solid #ef4444;
+
+}
+
+
+
+.attacker-rank{
+
+    width:34px;
+
+    height:34px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:#0d1117;
+
+    color:#58a6ff;
+
+    font-weight:700;
+
+}
+
+
+
+.top-threat .attacker-rank{
+
+    color:#ef4444;
+
+}
+
+
+
+.attacker-info{
+
+    flex:1;
+
+}
+
+
+
+.attacker-ip{
 
     font-family:monospace;
 
     color:#58a6ff;
 
+    font-size:15px;
+
 }
 
-.top-attackers-empty {
+
+
+.attack-bar{
+
+    height:6px;
+
+    background:#0d1117;
+
+    border-radius:10px;
+
+    margin-top:10px;
+
+    overflow:hidden;
+
+}
+
+
+
+.attack-bar div{
+
+    height:100%;
+
+    background:#ef4444;
+
+    border-radius:10px;
+
+}
+
+
+
+.attack-count{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:flex-end;
+
+}
+
+
+
+.attack-count strong{
+
+    color:white;
+
+    font-size:20px;
+
+}
+
+
+
+.attack-count span{
+
+    color:#8b949e;
+
+    font-size:12px;
+
+}
+
+
+
+.top-attackers-empty{
 
     padding:40px;
 
     text-align:center;
 
     color:#8b949e;
+
+}
+
+
+
+@media(max-width:700px){
+
+
+    .attacker-row{
+
+        gap:12px;
+
+        padding:16px;
+
+    }
+
+
+    .attack-count strong{
+
+        font-size:16px;
+
+    }
 
 }

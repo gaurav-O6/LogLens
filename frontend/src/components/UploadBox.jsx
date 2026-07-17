@@ -3,16 +3,17 @@ import { UploadCloud, CheckCircle, AlertCircle } from "lucide-react";
 import api from "../api/client";
 
 
-function UploadBox({ onUpload }) {
+function UploadBox({ onComplete }) {
 
 
-    const [file,setFile] = useState(null);
+    const [file, setFile] = useState(null);
 
-    const [loading,setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const [result,setResult] = useState(null);
+    const [result, setResult] = useState(null);
 
-    const [error,setError] = useState("");
+    const [error, setError] = useState("");
+
 
 
 
@@ -31,7 +32,7 @@ function UploadBox({ onUpload }) {
 
         const formData = new FormData();
 
-        formData.append("file",file);
+        formData.append("file", file);
 
 
 
@@ -53,7 +54,6 @@ function UploadBox({ onUpload }) {
                 formData,
 
                 {
-
                     headers:{
 
                         "Content-Type":
@@ -71,15 +71,12 @@ function UploadBox({ onUpload }) {
 
 
 
-            onUpload?.();
-
-
-
         }
         catch(error){
 
 
             console.error(error);
+
 
             setError(
                 "Upload failed. Please try again."
@@ -101,15 +98,70 @@ function UploadBox({ onUpload }) {
 
 
 
+
+
+    const handleDemoLoad = async()=>{
+
+
+        try{
+
+
+            setLoading(true);
+
+            setError("");
+
+            setResult(null);
+
+
+
+            const response = await api.get(
+
+                "/logs/demo"
+
+            );
+
+
+
+            setResult(response.data);
+
+
+
+        }
+        catch(error){
+
+
+            console.error(error);
+
+
+            setError(
+                "Demo loading failed. Please try again."
+            );
+
+
+        }
+        finally{
+
+
+            setLoading(false);
+
+
+        }
+
+
+    };
+
+
+
+
+
+
     return(
 
 
         <div className="upload-box">
 
 
-            <UploadCloud
-                size={48}
-            />
+            <UploadCloud size={48}/>
 
 
 
@@ -144,9 +196,12 @@ function UploadBox({ onUpload }) {
 
                 <span>
 
-                    {file
-                        ? file.name
-                        : "Choose log file"
+                    {
+                        file
+                        ?
+                        file.name
+                        :
+                        "Choose log file"
                     }
 
                 </span>
@@ -176,6 +231,31 @@ function UploadBox({ onUpload }) {
 
 
             </button>
+
+
+
+
+
+            <button
+
+                onClick={handleDemoLoad}
+
+                disabled={loading}
+
+            >
+
+                {
+                    loading
+                    ?
+                    "Loading Demo..."
+                    :
+                    "Load Demo Log"
+                }
+
+
+            </button>
+
+
 
 
 
@@ -212,6 +292,19 @@ function UploadBox({ onUpload }) {
                             </p>
 
 
+
+                            <button
+
+                                onClick={onComplete}
+
+                            >
+
+                                View Dashboard
+
+                            </button>
+
+
+
                         </div>
 
 
@@ -219,6 +312,8 @@ function UploadBox({ onUpload }) {
 
                 )
             }
+
+
 
 
 

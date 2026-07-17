@@ -4,14 +4,95 @@ import {
     ShieldAlert,
     Globe,
     FileText,
-    Home
+    Home,
+    Activity,
+    Terminal,
+    Server,
+    Clock,
+    Copy,
+    CheckCircle
 } from "lucide-react";
+
+import { useState } from "react";
 
 
 function InvestigationPanel({
     detection,
     onClose
 }) {
+
+
+    const [copied,setCopied] = useState(false);
+
+
+
+    const getRiskLabel = (severity)=>{
+
+        if(severity === "High")
+            return "CRITICAL THREAT";
+
+
+        if(severity === "Medium")
+            return "SUSPICIOUS ACTIVITY";
+
+
+        return "LOW RISK EVENT";
+
+    };
+
+
+
+    const formatTimestamp = (timestamp)=>{
+
+        if(!timestamp)
+            return "-";
+
+
+        return timestamp.replace(
+            /:(\d{2})\s/,
+            " $1 "
+        );
+
+    };
+
+
+
+    const copyIP = ()=>{
+
+        navigator.clipboard.writeText(
+            detection.source_ip
+        );
+
+
+        setCopied(true);
+
+
+        setTimeout(()=>{
+            setCopied(false);
+        },1500);
+
+    };
+
+
+
+    const countryFlag = (country)=>{
+
+        const flags={
+
+            "United States":"🇺🇸",
+            "India":"🇮🇳",
+            "Germany":"🇩🇪",
+            "United Kingdom":"🇬🇧"
+
+        };
+
+
+        return flags[country] || "🌐";
+
+    };
+
+
+
 
 
     return (
@@ -24,14 +105,22 @@ function InvestigationPanel({
 
                 <div>
 
-                    <h2>
-                        Threat Investigation
-                    </h2>
+
+                    <div className="incident-title">
+
+                        <ShieldAlert size={22}/>
+
+                        <h2>
+                            Threat Investigation
+                        </h2>
+
+                    </div>
 
 
                     <p>
                         Detailed security event analysis
                     </p>
+
 
                 </div>
 
@@ -41,7 +130,7 @@ function InvestigationPanel({
                     onClick={onClose}
                 >
 
-                    <X size={20}/>
+                    <X size={18}/>
 
                 </button>
 
@@ -52,172 +141,297 @@ function InvestigationPanel({
 
 
 
-            <div className="risk-banner">
+            <div className="investigation-body">
 
 
-                <ShieldAlert size={28}/>
 
 
-                <div>
 
-                    <span>
-                        Severity
-                    </span>
+                {/* Threat Banner */}
+
+                <div
+                    className={
+                        `threat-banner ${
+                            detection.severity?.toLowerCase()
+                        }`
+                    }
+                >
+
+                    <ShieldAlert size={30}/>
 
 
-                    <strong>
-                        {detection.severity}
-                    </strong>
+                    <div>
+
+                        <span>
+                            {getRiskLabel(
+                                detection.severity
+                            )}
+                        </span>
+
+
+                        <strong>
+                            {detection.severity}
+                        </strong>
+
+                    </div>
+
 
                 </div>
 
 
-            </div>
 
 
 
 
 
-            <section className="investigation-section">
+                {/* Incident Details */}
+
+                <section className="investigation-card">
 
 
-                <h3>
-                    Attack Information
-                </h3>
+                    <h3>
 
+                        <Activity size={16}/>
 
-                <p>
+                        Attack Details
 
-                    <strong>
-                        Type:
-                    </strong>
-
-                    {" "}
-
-                    {detection.attack_type}
-
-                </p>
-
-
-
-                <p>
-
-                    <strong>
-                        Pattern:
-                    </strong>
-
-                    {" "}
-
-                    {
-                        detection.matched_pattern || "-"
-                    }
-
-                </p>
-
-
-            </section>
+                    </h3>
 
 
 
 
-
-            <section className="investigation-section">
-
-
-                <h3>
-                    Source Intelligence
-                </h3>
+                    <div className="info-grid">
 
 
+                        <div className="info-item">
 
-                <p>
+                            <span>
+                                Incident ID
+                            </span>
 
-                    <strong>
-                        IP:
-                    </strong>
+                            <strong>
+                                #{detection.id}
+                            </strong>
 
-                    {" "}
-
-                    {detection.source_ip}
-
-                </p>
+                        </div>
 
 
 
+                        <div className="info-item">
 
-                {
-                    detection.is_private_ip && (
+                            <span>
+                                Attack Type
+                            </span>
 
-                        <p className="location-line">
+                            <strong>
+                                {detection.attack_type}
+                            </strong>
+
+                        </div>
+
+
+
+                        <div className="info-item">
+
+                            <span>
+                                Pattern
+                            </span>
+
+                            <strong>
+                                {
+                                    detection.matched_pattern || "-"
+                                }
+                            </strong>
+
+                        </div>
+
+
+                        <div className="info-item">
+
+                            <span>
+                                Status Code
+                            </span>
+
+
+                            <strong>
+                                {detection.status_code || "-"}
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+
+                </section>
+
+
+
+
+
+
+
+
+                {/* Source Intelligence */}
+
+                <section className="investigation-card">
+
+
+                    <h3>
+
+                        <Globe size={16}/>
+
+                        Source Intelligence
+
+                    </h3>
+
+
+
+
+                    <div className="info-row">
+
+                        <Server size={16}/>
+
+
+                        <span>
+                            {detection.source_ip}
+                        </span>
+
+
+                        <button
+                            onClick={copyIP}
+                            title="Copy IP"
+                        >
+
+                            {
+                                copied
+                                ?
+                                <CheckCircle size={15}/>
+                                :
+                                <Copy size={15}/>
+                            }
+
+                        </button>
+
+
+                    </div>
+
+
+
+
+
+                    <div className="info-row">
+
+
+                        {
+                            detection.is_private_ip
+
+                            ?
 
                             <Home size={16}/>
 
-                            Internal Network IP
+                            :
 
-                        </p>
+                            <Globe size={16}/>
 
-                    )
-                }
-
+                        }
 
 
 
+                        <span>
 
-                <p className="location-line">
+                            {
+                                detection.is_private_ip
+                                ?
+                                "Internal Network"
+                                :
+                                "External IP"
+                            }
+
+                        </span>
 
 
-                    <MapPin size={16}/>
+                    </div>
+
+
+
+
+
+
+                    <div className="info-row">
+
+
+                        <MapPin size={16}/>
+
+
+                        <span>
+
+
+                            {
+                                countryFlag(
+                                    detection.country
+                                )
+                            }
+
+
+                            {" "}
+
+
+                            {
+                                detection.city &&
+                                detection.country
+
+                                ?
+
+                                `${detection.city}, ${detection.country}`
+
+                                :
+
+                                "Unknown Location"
+
+                            }
+
+
+                        </span>
+
+
+                    </div>
+
+
+
 
 
                     {
+                        detection.latitude &&
+                        detection.longitude &&
 
-                        detection.city &&
-                        detection.country
+                        <div className="info-row">
 
-                        ?
+                            <MapPin size={16}/>
 
-                        `${detection.city}, ${detection.country}`
 
-                        :
+                            <span>
 
-                        "Unknown Location"
+                                Coordinates:
+
+                                {" "}
+
+                                {detection.latitude},
+
+                                {" "}
+
+                                {detection.longitude}
+
+                            </span>
+
+
+                        </div>
 
                     }
 
 
-                </p>
 
-
-
-
-
-                <p className="location-line">
-
-
-                    <Globe size={16}/>
-
-
-                    {
-
-                        detection.latitude !== null &&
-                        detection.longitude !== null
-
-                        ?
-
-                        `${detection.latitude}, ${detection.longitude}`
-
-                        :
-
-                        "Coordinates unavailable"
-
-                    }
-
-
-                </p>
-
-
-
-            </section>
+                </section>
 
 
 
@@ -225,64 +439,90 @@ function InvestigationPanel({
 
 
 
-            <section className="investigation-section">
 
 
-                <h3>
-                    HTTP Evidence
-                </h3>
+                {/* HTTP Evidence */}
+
+                <section className="investigation-card">
 
 
+                    <h3>
 
-                <p>
+                        <Terminal size={16}/>
 
-                    <strong>
-                        Method:
-                    </strong>
+                        HTTP Evidence
 
-                    {" "}
-
-                    {
-                        detection.http_method || "-"
-                    }
-
-                </p>
+                    </h3>
 
 
 
-                <p>
 
-                    <strong>
+                    <div className="info-grid">
+
+
+                        <div className="info-item">
+
+                            <span>
+                                Method
+                            </span>
+
+
+                            <strong>
+                                {
+                                    detection.http_method || "-"
+                                }
+                            </strong>
+
+
+                        </div>
+
+
+
+                        <div className="info-item">
+
+                            <span>
+                                Status
+                            </span>
+
+
+                            <strong>
+
+                                {
+                                    detection.status_code || "-"
+                                }
+
+                            </strong>
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+
+
+                    <div className="endpoint">
+
+
                         Endpoint:
-                    </strong>
-
-                    {" "}
-
-                    {
-                        detection.request_path || "-"
-                    }
-
-                </p>
 
 
+                        <strong>
 
-                <p>
+                            {
+                                detection.request_path || "-"
+                            }
 
-                    <strong>
-                        Status:
-                    </strong>
+                        </strong>
 
-                    {" "}
 
-                    {
-                        detection.status_code || "-"
-                    }
-
-                </p>
+                    </div>
 
 
 
-            </section>
+                </section>
 
 
 
@@ -290,32 +530,75 @@ function InvestigationPanel({
 
 
 
-            <section className="investigation-section">
 
 
-                <h3>
+                {/* Time */}
 
-                    <FileText size={16}/>
-
-                    Raw Event
-
-                </h3>
+                <section className="investigation-card">
 
 
+                    <h3>
 
-                <pre>
+                        <Clock size={16}/>
 
-                    {
-                        detection.raw_log || "-"
-                    }
+                        Event Time
 
-                </pre>
-
-
-            </section>
+                    </h3>
 
 
 
+                    <p>
+
+                        {
+                            formatTimestamp(
+                                detection.timestamp
+                            )
+                        }
+
+                    </p>
+
+
+                </section>
+
+
+
+
+
+
+
+
+
+                {/* Raw Event */}
+
+                <section className="investigation-card">
+
+
+                    <h3>
+
+                        <FileText size={16}/>
+
+                        Raw Event
+
+                    </h3>
+
+
+
+                    <pre>
+
+                        {
+                            detection.raw_log || "-"
+                        }
+
+                    </pre>
+
+
+                </section>
+
+
+
+
+
+            </div>
 
 
         </aside>

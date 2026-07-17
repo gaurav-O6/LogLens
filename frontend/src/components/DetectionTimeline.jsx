@@ -6,45 +6,42 @@ import {
     Tooltip,
     ResponsiveContainer,
     CartesianGrid,
+    Area,
+    AreaChart,
 } from "recharts";
 
 
-function DetectionTimeline({ detections }) {
+
+function DetectionTimeline({ timeline }) {
 
 
-    const timeline = {};
-
-
-
-    detections.forEach((item)=>{
-
-
-        if(!item.timestamp)
-            return;
-
-
-        const time = new Date(item.timestamp)
-            .toLocaleTimeString([], {
-                hour:"2-digit",
-                minute:"2-digit"
-            });
-
-
-        timeline[time] =
-            (timeline[time] || 0) + 1;
-
-
-    });
-
-
-
-    const data = Object.entries(timeline)
-        .map(([time,count])=>({
-
+    const data = Object.entries(timeline || {})
+        .map(([time, count]) => ({
             time,
             count
+        }))
+        .sort((a,b)=>
+            a.time.localeCompare(b.time)
+        );
 
-        }));
+
+
+    const totalEvents =
+        data.reduce(
+            (sum,item)=>sum+item.count,
+            0
+        );
+
+
+
+    const peak =
+        data.length
+        ? Math.max(
+            ...data.map(
+                item=>item.count
+            )
+        )
+        : 0;
 
 
 
@@ -55,35 +52,88 @@ function DetectionTimeline({ detections }) {
 
             <div className="chart-header">
 
-                <h2>
-                    Detection Timeline
-                </h2>
+
+                <div>
+
+                    <h2>
+                        Detection Timeline
+                    </h2>
+
+
+                    <p>
+                        Attack activity trends over time
+                    </p>
+
+                </div>
+
+
+
+                <div className="timeline-stats">
+
+                    <span>
+                        Events: {totalEvents}
+                    </span>
+
+
+                    <span>
+                        Peak: {peak}
+                    </span>
+
+                </div>
+
 
             </div>
 
 
 
+
+
             <ResponsiveContainer
                 width="100%"
-                height={300}
+                height={320}
             >
 
 
-                <LineChart
+                <AreaChart
                     data={data}
-                    margin={{
-                        top:20,
-                        right:20,
-                        left:0,
-                        bottom:20
-                    }}
                 >
+
+
+                    <defs>
+
+                        <linearGradient
+                            id="attackGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                        >
+
+                            <stop
+                                offset="0%"
+                                stopColor="#ef4444"
+                                stopOpacity={0.35}
+                            />
+
+                            <stop
+                                offset="100%"
+                                stopColor="#ef4444"
+                                stopOpacity={0}
+                            />
+
+                        </linearGradient>
+
+
+                    </defs>
+
+
 
 
                     <CartesianGrid
                         stroke="#30363d"
                         vertical={false}
                     />
+
 
 
                     <XAxis
@@ -102,6 +152,7 @@ function DetectionTimeline({ detections }) {
                         tickLine={false}
 
                     />
+
 
 
 
@@ -124,9 +175,9 @@ function DetectionTimeline({ detections }) {
 
 
 
-                    <Tooltip
 
-                        cursor={false}
+
+                    <Tooltip
 
                         contentStyle={{
 
@@ -134,11 +185,29 @@ function DetectionTimeline({ detections }) {
 
                             border:"1px solid #30363d",
 
-                            borderRadius:"8px",
+                            borderRadius:"10px",
 
                             color:"#ffffff"
 
                         }}
+
+                    />
+
+
+
+
+
+                    <Area
+
+                        type="monotone"
+
+                        dataKey="count"
+
+                        stroke="#ef4444"
+
+                        fill="url(#attackGradient)"
+
+                        strokeWidth={3}
 
                     />
 
@@ -150,20 +219,19 @@ function DetectionTimeline({ detections }) {
 
                         dataKey="count"
 
-                        stroke="#10a37f"
+                        stroke="#ef4444"
 
-                        strokeWidth={3}
+                        strokeWidth={2}
 
                         dot={{
-                            r:5
+                            r:4
                         }}
-
-                        activeDot={false}
 
                     />
 
 
-                </LineChart>
+
+                </AreaChart>
 
 
             </ResponsiveContainer>

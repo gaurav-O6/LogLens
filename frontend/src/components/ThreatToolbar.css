@@ -1,0 +1,219 @@
+.threat-toolbar {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
+
+    width:100%;
+
+    background:#111827;
+
+    border:1px solid #30363d;
+
+    border-radius:14px;
+
+    padding:16px;
+
+    box-sizing:border-box;
+
+}
+
+
+
+/* Search */
+
+.toolbar-search {
+
+    flex:1;
+
+    height:42px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    position:relative;
+
+    color:#8b949e;
+
+    background:#0d1117;
+
+    border:1px solid #30363d;
+
+    border-radius:8px;
+
+    padding:0 12px;
+
+}
+
+
+
+.toolbar-search input {
+
+    flex:1;
+
+    height:100%;
+
+    background:transparent;
+
+    border:none;
+
+    color:#e6edf3;
+
+    font-size:14px;
+
+    outline:none;
+
+    padding:0 32px 0 0;
+
+}
+
+
+
+.toolbar-search input::placeholder {
+
+    color:#8b949e;
+
+}
+
+
+
+.toolbar-search:focus-within {
+
+    border-color:#58a6ff;
+
+}
+
+
+
+/* Clear Button */
+
+.clear-search {
+
+    position:absolute;
+
+    right:10px;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    background:none;
+
+    border:none;
+
+    color:#8b949e;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:4px;
+
+}
+
+
+
+.clear-search:hover {
+
+    color:white;
+
+}
+
+
+
+
+
+/* Filters */
+
+.toolbar-filter {
+
+    height:42px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:0 12px;
+
+    background:#0d1117;
+
+    border:1px solid #30363d;
+
+    border-radius:8px;
+
+    color:#8b949e;
+
+}
+
+
+
+.toolbar-filter select {
+
+    height:100%;
+
+    min-width:150px;
+
+    background:transparent;
+
+    border:none;
+
+    color:#e6edf3;
+
+    font-size:14px;
+
+    cursor:pointer;
+
+    outline:none;
+
+    padding:0;
+
+}
+
+
+
+.toolbar-filter option {
+
+    background:#111827;
+
+    color:#e6edf3;
+
+}
+
+
+
+
+
+@media(max-width:900px){
+
+
+    .threat-toolbar {
+
+        flex-wrap:wrap;
+
+    }
+
+
+    .toolbar-search {
+
+        flex-basis:100%;
+
+    }
+
+
+    .toolbar-filter {
+
+        flex:1;
+
+    }
+
+
+}

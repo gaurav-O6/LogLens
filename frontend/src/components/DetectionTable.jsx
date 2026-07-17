@@ -1,13 +1,16 @@
 function DetectionTable({
     detections,
-    onSelect
+    onSelect,
+    selected
 }) {
 
     return (
 
         <div className="table-container">
 
+
             <div className="table-header">
+
 
                 <div className="table-title">
 
@@ -22,6 +25,7 @@ function DetectionTable({
                 </div>
 
 
+
                 <div className="detection-count">
 
                     <strong>
@@ -34,12 +38,18 @@ function DetectionTable({
 
                 </div>
 
+
             </div>
+
+
+
 
 
             <div className="table-wrapper">
 
+
                 <table>
+
 
                     <thead>
 
@@ -74,7 +84,10 @@ function DetectionTable({
                     </thead>
 
 
+
+
                     <tbody>
+
 
                     {
                         detections.length === 0
@@ -102,17 +115,28 @@ function DetectionTable({
 
                         detections.map((item)=>(
 
+
                             <tr
 
                                 key={item.id}
 
-                                className="clickable-row"
+
+                                className={
+                                    `clickable-row ${
+                                        selected?.id === item.id
+                                        ? "selected"
+                                        : ""
+                                    }`
+                                }
+
 
                                 onClick={() =>
                                     onSelect(item)
                                 }
 
                             >
+
+
 
                                 <td>
 
@@ -121,6 +145,9 @@ function DetectionTable({
                                     }
 
                                 </td>
+
+
+
 
 
                                 <td className="attack-name">
@@ -132,13 +159,18 @@ function DetectionTable({
                                 </td>
 
 
+
+
+
+
                                 <td>
 
                                     <span
 
                                         className={
                                             `severity-badge ${
-                                                item.severity?.toLowerCase()
+                                                item.severity
+                                                ?.toLowerCase()
                                             }`
                                         }
 
@@ -150,20 +182,34 @@ function DetectionTable({
 
                                     </span>
 
+
                                 </td>
+
+
+
+
+
 
 
                                 <td className="ip-address">
 
+
                                     <div>
+
                                         {
                                             item.source_ip
                                         }
+
                                     </div>
 
 
+
+
                                     {
-                                        item.is_private_ip && (
+
+                                        item.is_private_ip &&
+
+                                        (
 
                                             <small className="private-ip-badge">
 
@@ -172,9 +218,16 @@ function DetectionTable({
                                             </small>
 
                                         )
+
                                     }
 
+
                                 </td>
+
+
+
+
+
 
 
                                 <td>
@@ -196,6 +249,11 @@ function DetectionTable({
                                 </td>
 
 
+
+
+
+
+
                                 <td className="pattern-cell">
 
                                     {
@@ -205,17 +263,27 @@ function DetectionTable({
                                 </td>
 
 
+
+
                             </tr>
+
 
                         ))
 
                     }
 
+
                     </tbody>
+
+
 
                 </table>
 
+
+
             </div>
+
+
 
         </div>
 

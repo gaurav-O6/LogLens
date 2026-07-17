@@ -1,26 +1,110 @@
-.attack-map-container {
+.attack-map-container{
 
     background:#111827;
 
     border:1px solid #30363d;
 
-    border-radius:14px;
+    border-radius:16px;
 
     overflow:hidden;
 
 }
 
-.attack-map {
 
-    height:520px;
+
+/* ==========================
+   Header
+========================== */
+
+
+.map-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:22px;
+
+}
+
+
+
+.map-header h2{
+
+    color:white;
+
+    font-size:22px;
+
+}
+
+
+
+.map-header p{
+
+    color:#8b949e;
+
+    margin-top:6px;
+
+}
+
+
+
+.map-stats{
+
+    display:flex;
+
+    gap:20px;
+
+}
+
+
+
+.map-stats div{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    color:#c9d1d9;
+
+    font-size:13px;
+
+}
+
+
+
+.map-stats svg{
+
+    color:#58a6ff;
+
+}
+
+
+
+
+
+/* ==========================
+   Map
+========================== */
+
+
+.attack-map{
+
+    height:540px;
 
     width:100%;
 
 }
 
-.map-empty {
 
-    height:520px;
+
+.map-empty{
+
+    height:540px;
 
     display:flex;
 
@@ -30,47 +114,301 @@
 
     color:#8b949e;
 
-    font-size:15px;
-
 }
 
-.leaflet-container {
+
+
+
+
+.leaflet-container{
 
     background:#0d1117;
 
 }
 
-.leaflet-popup-content-wrapper {
+
+
+.leaflet-tile{
+
+    filter:
+    brightness(.75)
+    contrast(1.1)
+    saturate(.75);
+
+}
+
+
+
+
+
+/* ==========================
+   Popup
+========================== */
+
+
+.leaflet-popup-content-wrapper{
 
     background:#161b22;
 
     color:#e6edf3;
 
-    border-radius:10px;
+    border-radius:14px;
+
+    border:1px solid #30363d;
 
 }
 
-.leaflet-popup-tip {
+
+
+.leaflet-popup-tip{
 
     background:#161b22;
 
 }
 
-.leaflet-popup-content {
 
-    line-height:1.7;
+
+.attack-popup{
+
+    min-width:220px;
+
+}
+
+
+
+.attack-popup h3{
+
+    margin-bottom:10px;
+
+    color:white;
+
+}
+
+
+
+.popup-risk{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
 
     font-size:13px;
 
+    margin-bottom:12px;
+
 }
 
-.leaflet-control-zoom {
+
+
+.popup-risk.high{
+
+    color:#ef4444;
+
+}
+
+
+
+.popup-risk.medium{
+
+    color:#f59e0b;
+
+}
+
+
+
+.popup-risk.low{
+
+    color:#22c55e;
+
+}
+
+
+
+.popup-row{
+
+    display:flex;
+
+    gap:6px;
+
+    color:#8b949e;
+
+    margin-bottom:12px;
+
+}
+
+
+
+.popup-item{
+
+    display:flex;
+
+    flex-direction:column;
+
+    margin-bottom:8px;
+
+}
+
+
+
+.popup-item b{
+
+    color:#8b949e;
+
+    font-size:12px;
+
+}
+
+
+
+.popup-item span{
+
+    color:white;
+
+    word-break:break-word;
+
+}
+
+
+
+
+
+/* ==========================
+   Individual Threat Markers
+========================== */
+
+
+.severity-marker{
+
+    background:transparent;
+
+    border:none;
+
+}
+
+
+
+.marker{
+
+    width:20px;
+
+    height:20px;
+
+    border-radius:50%;
+
+    border:3px solid white;
+
+    animation:pulse 2s infinite;
+
+}
+
+
+
+.marker.high{
+
+    background:#ef4444;
+
+    box-shadow:
+    0 0 20px #ef4444;
+
+}
+
+
+
+.marker.medium{
+
+    background:#f59e0b;
+
+    box-shadow:
+    0 0 20px #f59e0b;
+
+}
+
+
+
+.marker.low{
+
+    background:#22c55e;
+
+    box-shadow:
+    0 0 20px #22c55e;
+
+}
+
+
+
+
+
+/* ==========================
+   SOC Cluster Styling
+========================== */
+
+
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large{
+
+    background:
+    rgba(239,68,68,.25);
+
+}
+
+
+
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div{
+
+    background:#ef4444;
+
+    color:white;
+
+    font-weight:700;
+
+    border-radius:50%;
+
+    width:46px;
+
+    height:46px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border:
+
+    3px solid rgba(255,255,255,.85);
+
+    box-shadow:
+
+    0 0 18px rgba(239,68,68,.8),
+    0 0 35px rgba(239,68,68,.35);
+
+}
+
+
+
+
+
+/* ==========================
+   Zoom Controls
+========================== */
+
+
+.leaflet-control-zoom{
 
     border:none !important;
 
+    box-shadow:none !important;
+
 }
 
-.leaflet-control-zoom a {
+
+
+.leaflet-control-zoom a{
 
     background:#111827 !important;
 
@@ -80,60 +418,77 @@
 
 }
 
-.leaflet-control-zoom a:hover {
+
+
+.leaflet-control-zoom a:hover{
 
     background:#1f2937 !important;
 
 }
 
-/* =======================
-   Severity markers
-======================= */
 
-.severity-marker {
 
-    background:transparent;
 
-    border:none;
 
-}
+/* ==========================
+   Animation
+========================== */
 
-.marker {
 
-    width:18px;
+@keyframes pulse{
 
-    height:18px;
 
-    border-radius:50%;
+    0%{
 
-    border:3px solid white;
+        transform:scale(.9);
 
-    box-shadow:0 0 12px rgba(0,0,0,.45);
+    }
 
-}
 
-.marker.high {
+    70%{
 
-    background:#ef4444;
+        transform:scale(1.15);
 
-}
+    }
 
-.marker.medium {
 
-    background:#f59e0b;
+    100%{
+
+        transform:scale(.9);
+
+    }
 
 }
 
-.marker.low {
 
-    background:#22c55e;
 
-}
 
-.marker:hover {
 
-    transform:scale(1.2);
+/* ==========================
+   Responsive
+========================== */
 
-    transition:.2s;
+
+@media(max-width:900px){
+
+
+    .map-header{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:15px;
+
+    }
+
+
+
+    .map-stats{
+
+        flex-wrap:wrap;
+
+    }
+
 
 }

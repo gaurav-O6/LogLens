@@ -9,14 +9,42 @@ import AttackMap from "../components/AttackMap";
 import DetectionTable from "../components/DetectionTable";
 import DetectionTimeline from "../components/DetectionTimeline";
 import TopAttackers from "../components/TopAttackers";
+import InvestigationPanel from "../components/InvestigationPanel";
+import ThreatFilterBar from "../components/ThreatFilterBar";
 
 import "./Dashboard.css";
 
+
 function Dashboard() {
 
+
     const [summary, setSummary] = useState(null);
+
     const [detections, setDetections] = useState([]);
+
+    const [filteredDetections, setFilteredDetections] = useState([]);
+
+    const [selectedDetection, setSelectedDetection] = useState(null);
+
     const [loading, setLoading] = useState(true);
+
+
+
+    const [filters, setFilters] = useState({
+
+        severity: "All",
+
+        network: "All",
+
+        attackType: "All",
+
+        search: "",
+
+    });
+
+
+
+
 
     useEffect(() => {
 
@@ -24,25 +52,52 @@ function Dashboard() {
 
     }, []);
 
+
+
+
+
+    useEffect(() => {
+
+        applyFilters();
+
+    }, [filters, detections]);
+
+
+
+
+
+
+
     const fetchData = async () => {
 
+
         try {
+
 
             const summaryResponse =
                 await apiClient.get("/analysis/summary");
 
+
+
             const detectionResponse =
                 await apiClient.get("/analysis/detections");
 
+
+
             setSummary(summaryResponse.data);
+
             setDetections(detectionResponse.data);
 
+
+
         }
-        catch (error) {
+
+        catch(error) {
 
             console.error(error);
 
         }
+
         finally {
 
             setLoading(false);
@@ -52,17 +107,218 @@ function Dashboard() {
     };
 
 
-    const exportReport = (format) => {
 
-        window.open(
-            `http://localhost:5000/api/v1/analysis/export/${format}`,
-            "_blank"
-        );
+
+
+
+
+
+    const applyFilters = () => {
+
+
+        let result = [...detections];
+
+
+
+        if(filters.severity !== "All") {
+
+
+            result = result.filter(
+
+                item =>
+                    item.severity === filters.severity
+
+            );
+
+        }
+
+
+
+
+        if(filters.network !== "All") {
+
+
+            if(filters.network === "Internal") {
+
+
+                result = result.filter(
+
+                    item =>
+                        item.is_private_ip === true
+
+                );
+
+
+            }
+
+
+            else {
+
+
+                result = result.filter(
+
+                    item =>
+                        item.is_private_ip === false
+
+                );
+
+
+            }
+
+        }
+
+
+
+
+
+
+
+        if(filters.attackType !== "All") {
+
+
+            result = result.filter(
+
+                item =>
+                    item.attack_type === filters.attackType
+
+            );
+
+
+        }
+
+
+
+
+
+
+
+        if(filters.search.trim() !== "") {
+
+
+            const search =
+                filters.search.toLowerCase();
+
+
+
+            result = result.filter(
+
+                item =>
+
+                    item.source_ip
+                    ?.toLowerCase()
+                    .includes(search)
+
+                    ||
+
+                    item.request_path
+                    ?.toLowerCase()
+                    .includes(search)
+
+            );
+
+
+        }
+
+
+
+
+
+
+        setFilteredDetections(result);
+
 
     };
 
 
-    if (loading) {
+
+
+
+
+
+    const createFilteredSummary = () => {
+
+
+        const severity = {};
+
+        const attacks = {};
+
+        const ips = {};
+
+
+
+        filteredDetections.forEach(item => {
+
+
+            severity[item.severity] =
+                (severity[item.severity] || 0) + 1;
+
+
+
+            attacks[item.attack_type] =
+                (attacks[item.attack_type] || 0) + 1;
+
+
+
+            ips[item.source_ip] =
+                (ips[item.source_ip] || 0) + 1;
+
+
+
+        });
+
+
+
+
+        return {
+
+
+            ...summary,
+
+
+            severity,
+
+
+            attack_types: attacks,
+
+
+            source_ips: ips,
+
+
+            total_attacks:
+                filteredDetections.length,
+
+        };
+
+
+    };
+
+
+
+
+
+
+    const exportReport = (format) => {
+
+
+        window.open(
+
+            `http://localhost:5000/api/v1/analysis/export/${format}`,
+
+            "_blank"
+
+        );
+
+
+    };
+
+
+
+
+
+
+
+    if(loading) {
+
 
         return (
 
@@ -74,165 +330,343 @@ function Dashboard() {
 
         );
 
+
     }
+
+
+
+
+
+    const attackTypes = [
+
+        ...new Set(
+
+            detections.map(
+                item => item.attack_type
+            )
+
+        )
+
+    ];
+
+
+
+
+
+    const filteredSummary =
+        createFilteredSummary();
+
+
+
+
+
 
 
     return (
 
         <div className="dashboard">
 
-            <div className="dashboard-title">
 
-                <div>
 
-                    <h1>
-                        SOC Dashboard
-                    </h1>
 
-                    <p>
-                        Security event monitoring and threat intelligence
-                    </p>
 
-                </div>
+<div className="dashboard-title">
 
-                <div className="export-buttons">
 
-                    <button
-                        className="export-btn"
-                        onClick={() => exportReport("csv")}
-                    >
-                        Export CSV
-                    </button>
+    <div className="dashboard-heading">
 
-                    <button
-                        className="export-btn"
-                        onClick={() => exportReport("json")}
-                    >
-                        Export JSON
-                    </button>
 
-                </div>
+        <div className="title-row">
 
-            </div>
+
+            <h1>
+                SOC Dashboard
+            </h1>
+
+
+            <span className="status-badge">
+
+                <span className="status-dot"></span>
+
+                Monitoring Active
+
+            </span>
+
+
+        </div>
+
+
+
+        <p>
+
+            Security operations overview — monitor threats,
+            analyze attack patterns, and investigate incidents
+
+        </p>
+
+
+    </div>
+
+
+
+
+
+    <div className="export-buttons">
+
+
+        <button
+            className="export-btn"
+            onClick={() => exportReport("csv")}
+        >
+
+            Export CSV
+
+        </button>
+
+
+
+        <button
+            className="export-btn"
+            onClick={() => exportReport("json")}
+        >
+
+            Export JSON
+
+        </button>
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+            <ThreatFilterBar
+
+                filters={filters}
+
+                setFilters={setFilters}
+
+                attackTypes={attackTypes}
+
+            />
+
+
+
+
+
 
 
             {
                 summary &&
-                <SummaryCards summary={summary} />
+
+                <SummaryCards
+
+                    summary={filteredSummary}
+
+                />
+
             }
+
+
+
+
+
 
 
             {
                 summary &&
-                <ThreatIntelCards summary={summary} />
+
+                <ThreatIntelCards
+
+                    summary={filteredSummary}
+
+                />
+
             }
+
+
+
+
+
+
 
 
             <section>
 
-                <div className="section-header">
-
-                    <h2>
-                        Global Attack Map
-                    </h2>
-
-                    <p>
-                        Geographic visualization of detected attack sources
-                    </p>
-
-                </div>
 
                 <AttackMap
-                    detections={detections}
+
+                    detections={
+                        filteredDetections
+                    }
+
                 />
+
 
             </section>
 
 
+
+
+
+
+
+
             <section>
 
+
                 <div className="section-header">
+
 
                     <h2>
                         Threat Overview
                     </h2>
 
+
                     <p>
                         Attack severity and classification analysis
                     </p>
 
+
                 </div>
+
+
+
+
 
                 <div className="dashboard-grid">
 
+
                     <SeverityChart
-                        severity={summary.severity}
+
+                        severity={
+                            filteredSummary.severity
+                        }
+
                     />
+
+
 
                     <AttackChart
-                        attacks={summary.attack_types}
+
+                        attacks={
+                            filteredSummary.attack_types
+                        }
+
                     />
 
+
                 </div>
+
 
             </section>
 
 
+
+
+
+
+
+
             <section>
 
-                <div className="section-header">
 
-                    <h2>
-                        Attack Activity
-                    </h2>
+            <DetectionTimeline
+                timeline={
+                    filteredSummary.timeline
+                }
+            />
 
-                    <p>
-                        Security events over time
-                    </p>
-
-                </div>
-
-                <DetectionTimeline
-                    detections={detections}
-                />
 
             </section>
 
 
+
+
+
+
+
+
             <section>
+
 
                 <TopAttackers
-                    sourceIps={summary.source_ips}
+
+                    sourceIps={
+                        filteredSummary.source_ips
+                    }
+
                 />
 
+
             </section>
+
+
+
+
+
+
 
 
             <section>
 
-                <div className="section-header">
-
-                    <h2>
-                        Recent Threats
-                    </h2>
-
-                    <p>
-                        Latest detected security events
-                    </p>
-
-                </div>
 
                 <DetectionTable
-                    detections={detections}
-                    onSelect={() => {}}
+
+                    detections={
+                        filteredDetections
+                    }
+
+                    onSelect={
+                        setSelectedDetection
+                    }
+
                 />
 
+
             </section>
+
+
+
+
+
+
+
+
+            {
+                selectedDetection &&
+
+                <InvestigationPanel
+
+                    detection={
+                        selectedDetection
+                    }
+
+                    onClose={
+                        () =>
+                            setSelectedDetection(null)
+                    }
+
+                />
+
+            }
+
+
+
 
         </div>
 
     );
 
+
 }
+
 
 export default Dashboard;

@@ -5,39 +5,52 @@ import {
     Popup,
 } from "react-leaflet";
 
+import MarkerClusterGroup from "react-leaflet-cluster";
+
 import L from "leaflet";
+
+import {
+    Globe,
+    ShieldAlert,
+    Activity,
+    MapPin,
+} from "lucide-react";
+
 
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
+
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 
 import "./AttackMap.css";
 
 
+
 const highIcon = new L.DivIcon({
     className: "severity-marker",
     html: '<div class="marker high"></div>',
-    iconSize: [18, 18],
+    iconSize:[20,20],
 });
 
 
 const mediumIcon = new L.DivIcon({
-    className: "severity-marker",
-    html: '<div class="marker medium"></div>',
-    iconSize: [18, 18],
+    className:"severity-marker",
+    html:'<div class="marker medium"></div>',
+    iconSize:[20,20],
 });
 
 
 const lowIcon = new L.DivIcon({
-    className: "severity-marker",
-    html: '<div class="marker low"></div>',
-    iconSize: [18, 18],
+    className:"severity-marker",
+    html:'<div class="marker low"></div>',
+    iconSize:[20,20],
 });
 
 
-function getMarkerIcon(severity) {
 
-    switch (severity?.toLowerCase()) {
+function getMarkerIcon(severity){
+
+    switch(severity?.toLowerCase()){
 
         case "high":
             return highIcon;
@@ -53,20 +66,32 @@ function getMarkerIcon(severity) {
 }
 
 
-function AttackMap({ detections }) {
+
+function AttackMap({detections}){
 
 
-    const locations = detections.filter(
+    const locations =
+        detections.filter(
+            item =>
+                item.latitude !== null &&
+                item.longitude !== null
+        );
 
-        (item) =>
 
-            item.latitude !== null &&
 
-            item.longitude !== null &&
+    const countries =
+        new Set(
+            locations.map(
+                item=>item.country
+            )
+        ).size;
 
-            !item.is_private_ip
 
-    );
+
+    const externalSources =
+        locations.filter(
+            item=>item.is_private_ip === false
+        ).length;
 
 
 
@@ -75,7 +100,8 @@ function AttackMap({ detections }) {
         <div className="attack-map-container">
 
 
-            <div className="chart-header">
+            <div className="map-header">
+
 
                 <div>
 
@@ -85,26 +111,69 @@ function AttackMap({ detections }) {
 
 
                     <p>
-                        Geographic origin of detected attacks
+                        Geographic intelligence from detected threats
                     </p>
 
                 </div>
+
+
+
+                <div className="map-stats">
+
+
+                    <div>
+
+                        <ShieldAlert size={18}/>
+
+                        <span>
+                            {locations.length} Attacks
+                        </span>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <Globe size={18}/>
+
+                        <span>
+                            {countries} Countries
+                        </span>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <Activity size={18}/>
+
+                        <span>
+                            {externalSources} External
+                        </span>
+
+                    </div>
+
+
+                </div>
+
 
             </div>
 
 
 
+
+
             {
+                locations.length === 0 ?
 
-                locations.length === 0
-
-                ?
 
                 (
 
                     <div className="map-empty">
 
-                        No public GeoIP locations available.
+                        No GeoIP locations available.
 
                     </div>
 
@@ -113,158 +182,172 @@ function AttackMap({ detections }) {
 
                 :
 
+
                 (
 
-                    <MapContainer
+                <MapContainer
 
-                        center={[20,0]}
+                    center={[20,0]}
 
-                        zoom={2}
+                    zoom={2}
 
-                        scrollWheelZoom={true}
+                    scrollWheelZoom={true}
 
-                        className="attack-map"
+                    className="attack-map"
 
+                >
+
+
+                    <TileLayer
+
+                        attribution="&copy; OpenStreetMap contributors"
+
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+
+                    />
+
+
+
+                    <MarkerClusterGroup
+                        chunkedLoading
                     >
 
 
-                        <TileLayer
+                    {
+                        locations.map(
+                            attack =>
 
-                            attribution='&copy; OpenStreetMap contributors'
+                            (
 
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            <Marker
 
-                        />
+                                key={attack.id}
 
+                                position={[
+                                    attack.latitude,
+                                    attack.longitude
+                                ]}
 
+                                icon={
+                                    getMarkerIcon(
+                                        attack.severity
+                                    )
+                                }
 
-                        {
-
-                            locations.map((attack)=>(
-
-
-                                <Marker
-
-                                    key={attack.id}
-
-                                    position={[
-
-                                        attack.latitude,
-
-                                        attack.longitude,
-
-                                    ]}
-
-                                    icon={
-                                        getMarkerIcon(
-                                            attack.severity
-                                        )
-                                    }
-
-                                >
+                            >
 
 
-                                    <Popup>
+                            <Popup>
 
 
-                                        <strong>
-
-                                            {
-                                                attack.attack_type
-                                            }
-
-                                        </strong>
+                                <div className="attack-popup">
 
 
-                                        <br />
-                                        <br />
+                                    <h3>
 
+                                        {attack.attack_type}
+
+                                    </h3>
+
+
+
+                                    <div className={`popup-risk ${attack.severity.toLowerCase()}`}>
+
+                                        <ShieldAlert size={15}/>
+
+                                        {attack.severity} Risk
+
+                                    </div>
+
+
+
+
+                                    <div className="popup-row">
+
+                                        <MapPin size={14}/>
+
+                                        {attack.city || "Unknown"},
+                                        {" "}
+                                        {attack.country || "Unknown"}
+
+                                    </div>
+
+
+
+                                    <div className="popup-item">
 
                                         <b>
-                                            Severity:
+                                            Source
                                         </b>
 
-                                        {" "}
+                                        <span>
+                                            {attack.source_ip}
+                                        </span>
 
-                                        {
-                                            attack.severity
-                                        }
+                                    </div>
 
 
-                                        <br />
 
+                                    <div className="popup-item">
 
                                         <b>
-                                            IP:
+                                            Target
                                         </b>
 
-                                        {" "}
+                                        <span>
+                                            {attack.request_path}
+                                        </span>
 
-                                        {
-                                            attack.source_ip
-                                        }
+                                    </div>
 
 
-                                        <br />
 
+                                    <div className="popup-item">
 
                                         <b>
-                                            Location:
+                                            Pattern
                                         </b>
 
-                                        {" "}
+                                        <span>
+                                            {attack.matched_pattern}
+                                        </span>
 
-                                        {
-                                            attack.city || "Unknown"
-                                        }
-
-                                        {", "}
-
-                                        {
-                                            attack.country || "Unknown"
-                                        }
+                                    </div>
 
 
-                                        <br />
 
+                                    <div className="popup-item">
 
                                         <b>
-                                            Endpoint:
+                                            Time
                                         </b>
 
-                                        {" "}
+                                        <span>
+                                            {attack.timestamp}
+                                        </span>
 
-                                        {
-                                            attack.request_path
-                                        }
-
-
-                                        <br />
+                                    </div>
 
 
-                                        <b>
-                                            Time:
-                                        </b>
 
-                                        {" "}
-
-                                        {
-                                            attack.timestamp
-                                        }
+                                </div>
 
 
-                                    </Popup>
+                            </Popup>
 
 
-                                </Marker>
+                            </Marker>
+
+                            )
+
+                        )
+                    }
 
 
-                            ))
-
-                        }
+                    </MarkerClusterGroup>
 
 
-                    </MapContainer>
+                </MapContainer>
 
                 )
 

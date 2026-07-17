@@ -1,11 +1,13 @@
 from pathlib import Path
 import re
-from typing import Optional
+from typing import Optional, Iterator
 
 
 class ApacheLogParser:
     """
     Parser for Apache Common Log Format (CLF) access logs.
+
+    Uses streaming parsing so the entire file is not loaded into memory.
     """
 
     LOG_PATTERN = re.compile(
@@ -21,43 +23,87 @@ class ApacheLogParser:
         r'"(?P<user_agent>[^"]*)"'
     )
 
+
+
     def parse_line(self, line: str) -> Optional[dict]:
         """
         Parse a single Apache log line.
         """
 
+
         match = self.LOG_PATTERN.match(line)
 
+
         if not match:
+
             return None
 
+
+
         return {
-            "ip": match.group("ip"),
-            "timestamp": match.group("timestamp"),
-            "method": match.group("method"),
-            "path": match.group("path"),
-            "status_code": int(match.group("status_code")),
-            "user_agent": match.group("user_agent"),
-            "raw_log": line,
+
+            "ip":
+                match.group("ip"),
+
+
+            "timestamp":
+                match.group("timestamp"),
+
+
+            "method":
+                match.group("method"),
+
+
+            "path":
+                match.group("path"),
+
+
+            "status_code":
+                int(match.group("status_code")),
+
+
+            "user_agent":
+                match.group("user_agent"),
+
+
+            "raw_log":
+                line,
+
         }
 
 
-    def parse_file(self, file_path: Path) -> list[dict]:
+
+
+    def parse_file(
+        self,
+        file_path: Path
+    ) -> Iterator[dict]:
         """
-        Parse an entire Apache log file.
+        Stream Apache log file line-by-line.
+
+        Does not store the complete file in RAM.
         """
 
-        parsed_logs = []
 
-        with file_path.open("r", encoding="utf-8") as file:
+        with file_path.open(
+            "r",
+            encoding="utf-8"
+        ) as file:
+
 
             for line in file:
 
+
                 raw_line = line.rstrip("\n")
 
-                parsed = self.parse_line(raw_line)
+
+
+                parsed = self.parse_line(
+                    raw_line
+                )
+
+
 
                 if parsed is not None:
-                    parsed_logs.append(parsed)
 
-        return parsed_logs
+                    yield parsed

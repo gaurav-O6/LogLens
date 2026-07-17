@@ -12,37 +12,40 @@ import "./Page.css";
 
 function Threats() {
 
-    const [detections, setDetections] = useState([]);
 
-    const [selectedDetection, setSelectedDetection] = useState(null);
+    const [detections,setDetections] = useState([]);
 
-    const [search, setSearch] = useState("");
+    const [selectedDetection,setSelectedDetection] = useState(null);
 
-    const [severityFilter, setSeverityFilter] = useState("All");
+    const [search,setSearch] = useState("");
 
-    const [attackFilter, setAttackFilter] = useState("All");
+    const [severityFilter,setSeverityFilter] = useState("All");
+
+    const [attackFilter,setAttackFilter] = useState("All");
 
 
-    useEffect(() => {
+
+    useEffect(()=>{
 
         loadThreats();
 
-    }, []);
+    },[]);
 
 
 
-    const loadThreats = async () => {
+    const loadThreats = async()=>{
 
-        try {
+        try{
 
             const response =
-                await apiClient.get("/analysis/detections");
-
+                await apiClient.get(
+                    "/analysis/detections"
+                );
 
             setDetections(response.data);
 
-
-        } catch(error) {
+        }
+        catch(error){
 
             console.error(
                 "Failed to load threats:",
@@ -58,18 +61,19 @@ function Threats() {
     const attackOptions = [
         ...new Set(
             detections.map(
-                item => item.attack_type
+                item=>item.attack_type
             )
         )
     ];
 
 
 
-    const filteredDetections =
-        detections.filter((item) => {
+    const filteredDetections = detections
+
+        .filter(item=>{
 
 
-            const searchText =
+            const text =
                 search.toLowerCase();
 
 
@@ -77,40 +81,40 @@ function Threats() {
             const matchesSearch =
 
                 item.source_ip
-                    ?.toLowerCase()
-                    .includes(searchText)
+                ?.toLowerCase()
+                .includes(text)
 
                 ||
 
                 item.attack_type
-                    ?.toLowerCase()
-                    .includes(searchText)
+                ?.toLowerCase()
+                .includes(text)
 
                 ||
 
                 item.matched_pattern
-                    ?.toLowerCase()
-                    .includes(searchText);
+                ?.toLowerCase()
+                .includes(text);
 
 
 
             const matchesSeverity =
 
-                severityFilter === "All"
+                severityFilter==="All"
 
                 ||
 
-                item.severity === severityFilter;
+                item.severity===severityFilter;
 
 
 
             const matchesAttack =
 
-                attackFilter === "All"
+                attackFilter==="All"
 
                 ||
 
-                item.attack_type === attackFilter;
+                item.attack_type===attackFilter;
 
 
 
@@ -129,52 +133,83 @@ function Threats() {
             );
 
 
+        })
+
+        .sort((a,b)=>{
+
+            const rank = {
+
+                High:3,
+
+                Medium:2,
+
+                Low:1
+
+            };
+
+
+            return (
+
+                (rank[b.severity] || 0)
+
+                -
+
+                (rank[a.severity] || 0)
+
+            );
+
         });
 
 
 
-    const summary = {
+    const sourceIps = detections.reduce(
+
+        (acc,item)=>{
+
+            acc[item.source_ip] =
+                (acc[item.source_ip] || 0) + 1;
+
+            return acc;
+
+        },
+
+        {}
+
+    );
+
+
+
+    const summary={
+
 
         total_attacks:
             detections.length,
 
 
-        severity: {
+        severity:{
+
 
             High:
                 detections.filter(
-                    item =>
-                    item.severity === "High"
+                    i=>i.severity==="High"
                 ).length,
 
 
             Medium:
                 detections.filter(
-                    item =>
-                    item.severity === "Medium"
+                    i=>i.severity==="Medium"
                 ).length,
 
 
             Low:
                 detections.filter(
-                    item =>
-                    item.severity === "Low"
-                ).length
+                    i=>i.severity==="Low"
+                ).length,
 
         },
 
 
-        source_ips:
-            detections.reduce(
-                (acc,item)=>{
-
-                    acc[item.source_ip] = true;
-
-                    return acc;
-
-                },
-                {}
-            )
+        source_ips:sourceIps
 
     };
 
@@ -190,7 +225,6 @@ function Threats() {
                 <h1>
                     Threat Center
                 </h1>
-
 
                 <p>
                     Investigate detected security incidents
@@ -210,34 +244,17 @@ function Threats() {
 
                 searchTerm={search}
 
-                onSearchChange={
-                    setSearch
-                }
+                onSearchChange={setSearch}
 
+                severityFilter={severityFilter}
 
-                severityFilter={
-                    severityFilter
-                }
+                onSeverityChange={setSeverityFilter}
 
+                attackFilter={attackFilter}
 
-                onSeverityChange={
-                    setSeverityFilter
-                }
+                attackOptions={attackOptions}
 
-
-                attackFilter={
-                    attackFilter
-                }
-
-
-                attackOptions={
-                    attackOptions
-                }
-
-
-                onAttackChange={
-                    setAttackFilter
-                }
+                onAttackChange={setAttackFilter}
 
             />
 
@@ -246,43 +263,75 @@ function Threats() {
             <div className="threat-workspace">
 
 
-    <DetectionTable
-
-        detections={
-            filteredDetections
-        }
+                <div className="threat-list">
 
 
-        onSelect={
-            setSelectedDetection
-        }
+                    <DetectionTable
+
+                        detections={
+                            filteredDetections
+                        }
+
+                        onSelect={
+                            setSelectedDetection
+                        }
+
+                    />
 
 
-    />
-
-
-</div>
+                </div>
 
 
 
-{
-    selectedDetection && (
-
-        <InvestigationPanel
-
-            detection={
-                selectedDetection
-            }
+                <div className="investigation-area">
 
 
-            onClose={
-                ()=>setSelectedDetection(null)
-            }
+                    {
 
-        />
+                    selectedDetection
 
-    )
-}
+                    ?
+
+                    <InvestigationPanel
+
+                        detection={
+                            selectedDetection
+                        }
+
+                        onClose={
+                            ()=>setSelectedDetection(null)
+                        }
+
+                    />
+
+
+                    :
+
+
+                    <div className="empty-investigation">
+
+
+                        <h3>
+                            Select a threat event
+                        </h3>
+
+
+                        <p>
+                            Choose an incident from the table
+                            to view investigation details
+                        </p>
+
+
+                    </div>
+
+                    }
+
+
+                </div>
+
+
+            </div>
+
 
         </div>
 
