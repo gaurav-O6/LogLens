@@ -1,0 +1,263 @@
+.recent-feed{
+
+    background:#111827;
+
+    border:1px solid #1f2937;
+
+    border-radius:16px;
+
+    overflow:hidden;
+
+}
+
+
+
+.recent-feed-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:20px 24px;
+
+    border-bottom:1px solid #1f2937;
+
+}
+
+
+
+.recent-feed-header h2{
+
+    color:white;
+
+    font-size:18px;
+
+    margin-bottom:4px;
+
+}
+
+
+
+.recent-feed-header p{
+
+    color:#8b949e;
+
+    font-size:13px;
+
+}
+
+
+
+.view-all-link{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    color:#10a37f;
+
+    font-weight:600;
+
+    transition:.2s;
+
+}
+
+
+
+.view-all-link:hover{
+
+    color:#32d4a9;
+
+}
+
+
+
+.feed-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+
+
+.feed-card{
+
+    display:flex;
+
+    gap:18px;
+
+    padding:18px 24px;
+
+    border-bottom:1px solid #1f2937;
+
+    transition:.2s;
+
+}
+
+
+
+.feed-card:last-child{
+
+    border-bottom:none;
+
+}
+
+
+
+.feed-card:hover{
+
+    background:#161b22;
+
+}
+
+
+
+.feed-icon{
+
+    width:46px;
+
+    height:46px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    border-radius:12px;
+
+    background:rgba(16,163,127,.12);
+
+    color:#10a37f;
+
+    flex-shrink:0;
+
+}
+
+
+
+.feed-content{
+
+    flex:1;
+
+}
+
+
+
+.feed-top{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:16px;
+
+}
+
+
+
+.feed-top h3{
+
+    color:white;
+
+    font-size:15px;
+
+    font-weight:600;
+
+}
+
+
+
+.feed-ip{
+
+    margin-top:6px;
+
+    font-family:monospace;
+
+    color:#d1d5db;
+
+    font-size:14px;
+
+}
+
+
+
+.feed-meta{
+
+    margin-top:12px;
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:20px;
+
+    color:#8b949e;
+
+    font-size:13px;
+
+}
+
+
+
+.feed-meta span{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+}
+
+
+
+.feed-empty{
+
+    padding:40px;
+
+    text-align:center;
+
+    color:#8b949e;
+
+}
+
+
+
+@media(max-width:768px){
+
+    .recent-feed-header{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:12px;
+
+    }
+
+    .feed-top{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+    }
+
+    .feed-meta{
+
+        flex-direction:column;
+
+        gap:8px;
+
+    }
+
+}

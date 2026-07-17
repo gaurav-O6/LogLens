@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import apiClient from "../api/client";
 
 import SummaryCards from "../components/SummaryCards";
+import ThreatIntelCards from "../components/ThreatIntelCards";
 import SeverityChart from "../components/SeverityChart";
 import AttackChart from "../components/AttackChart";
 import DetectionTable from "../components/DetectionTable";
@@ -17,7 +18,9 @@ function Dashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+
         fetchData();
+
     }, []);
 
     const fetchData = async () => {
@@ -31,14 +34,17 @@ function Dashboard() {
                 await apiClient.get("/analysis/detections");
 
             setSummary(summaryResponse.data);
+
             setDetections(detectionResponse.data);
 
         }
+
         catch (error) {
 
             console.error(error);
 
         }
+
         finally {
 
             setLoading(false);
@@ -118,6 +124,12 @@ function Dashboard() {
             }
 
 
+            {
+                summary &&
+                <ThreatIntelCards summary={summary} />
+            }
+
+
             <section>
 
                 <div className="section-header">
@@ -168,8 +180,6 @@ function Dashboard() {
             </section>
 
 
-            {/* NEW Top Attackers Section */}
-
             <section>
 
                 <TopAttackers
@@ -187,10 +197,15 @@ function Dashboard() {
                         Recent Threats
                     </h2>
 
+                    <p>
+                        Latest detected security events
+                    </p>
+
                 </div>
 
                 <DetectionTable
                     detections={detections}
+                    onSelect={() => {}}
                 />
 
             </section>
