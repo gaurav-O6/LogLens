@@ -3,7 +3,8 @@ import {
     MapPin,
     ShieldAlert,
     Globe,
-    FileText
+    FileText,
+    Home
 } from "lucide-react";
 
 
@@ -144,6 +145,24 @@ function InvestigationPanel({
 
 
 
+                {
+                    detection.is_private_ip && (
+
+                        <p className="location-line">
+
+                            <Home size={16}/>
+
+                            Internal Network IP
+
+                        </p>
+
+                    )
+                }
+
+
+
+
+
                 <p className="location-line">
 
 
@@ -172,7 +191,7 @@ function InvestigationPanel({
 
 
 
-                <p>
+                <p className="location-line">
 
 
                     <Globe size={16}/>
@@ -180,8 +199,8 @@ function InvestigationPanel({
 
                     {
 
-                        detection.latitude &&
-                        detection.longitude
+                        detection.latitude !== null &&
+                        detection.longitude !== null
 
                         ?
 
@@ -294,6 +313,8 @@ function InvestigationPanel({
 
 
             </section>
+
+
 
 
 

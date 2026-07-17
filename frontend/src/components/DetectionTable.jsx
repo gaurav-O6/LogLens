@@ -3,21 +3,17 @@ function DetectionTable({
     onSelect
 }) {
 
-
     return (
 
         <div className="table-container">
 
-
             <div className="table-header">
-
 
                 <div className="table-title">
 
                     <h2>
                         Threat Events
                     </h2>
-
 
                     <p>
                         Security incidents detected from logs
@@ -26,13 +22,11 @@ function DetectionTable({
                 </div>
 
 
-
                 <div className="detection-count">
 
                     <strong>
                         {detections.length}
                     </strong>
-
 
                     <span>
                         Events
@@ -40,17 +34,12 @@ function DetectionTable({
 
                 </div>
 
-
             </div>
-
-
 
 
             <div className="table-wrapper">
 
-
                 <table>
-
 
                     <thead>
 
@@ -60,26 +49,21 @@ function DetectionTable({
                                 Time
                             </th>
 
-
                             <th>
                                 Attack
                             </th>
-
 
                             <th>
                                 Severity
                             </th>
 
-
                             <th>
                                 Source IP
                             </th>
 
-
                             <th>
                                 Location
                             </th>
-
 
                             <th>
                                 Pattern
@@ -90,9 +74,7 @@ function DetectionTable({
                     </thead>
 
 
-
                     <tbody>
-
 
                     {
                         detections.length === 0
@@ -112,17 +94,13 @@ function DetectionTable({
 
                                 </td>
 
-
                             </tr>
 
                         )
 
-
                         :
 
-
                         detections.map((item)=>(
-
 
                             <tr
 
@@ -136,7 +114,6 @@ function DetectionTable({
 
                             >
 
-
                                 <td>
 
                                     {
@@ -144,7 +121,6 @@ function DetectionTable({
                                     }
 
                                 </td>
-
 
 
                                 <td className="attack-name">
@@ -156,9 +132,7 @@ function DetectionTable({
                                 </td>
 
 
-
                                 <td>
-
 
                                     <span
 
@@ -176,24 +150,34 @@ function DetectionTable({
 
                                     </span>
 
-
                                 </td>
-
 
 
                                 <td className="ip-address">
 
+                                    <div>
+                                        {
+                                            item.source_ip
+                                        }
+                                    </div>
+
+
                                     {
-                                        item.source_ip
+                                        item.is_private_ip && (
+
+                                            <small className="private-ip-badge">
+
+                                                🏠 Internal IP
+
+                                            </small>
+
+                                        )
                                     }
 
                                 </td>
 
 
-
-
                                 <td>
-
 
                                     {
                                         item.city &&
@@ -209,10 +193,7 @@ function DetectionTable({
 
                                     }
 
-
                                 </td>
-
-
 
 
                                 <td className="pattern-cell">
@@ -224,23 +205,17 @@ function DetectionTable({
                                 </td>
 
 
-
                             </tr>
-
 
                         ))
 
                     }
 
-
                     </tbody>
-
 
                 </table>
 
-
             </div>
-
 
         </div>
 

@@ -5,11 +5,14 @@ import {
     Target,
     Clock3,
     Activity,
+    Server,
 } from "lucide-react";
 
 import "./ThreatIntelCards.css";
 
+
 function ThreatIntelCards({ summary }) {
+
 
     const cards = [
 
@@ -19,11 +22,13 @@ function ThreatIntelCards({ summary }) {
             icon: <Radar size={22} />,
         },
 
+
         {
             title: "Top Country",
             value: summary?.most_active_country || "Unknown",
             icon: <Globe size={22} />,
         },
+
 
         {
             title: "Target Endpoint",
@@ -31,19 +36,24 @@ function ThreatIntelCards({ summary }) {
             icon: <Target size={22} />,
         },
 
+
         {
             title: "Highest Risk",
             value: summary?.highest_risk_attack || "N/A",
             icon: <ShieldAlert size={22} />,
         },
 
+
         {
             title: "Latest Attack",
             value: summary?.latest_attack
-                ? new Date(summary.latest_attack).toLocaleString()
+                ? new Date(
+                    summary.latest_attack
+                ).toLocaleString()
                 : "N/A",
             icon: <Clock3 size={22} />,
         },
+
 
         {
             title: "Total Attacks",
@@ -51,18 +61,34 @@ function ThreatIntelCards({ summary }) {
             icon: <Activity size={22} />,
         },
 
+
+        {
+            title: "Network Activity",
+            value:
+                `Internal: ${
+                    summary?.network_type?.private || 0
+                } | External: ${
+                    summary?.network_type?.public || 0
+                }`,
+            icon: <Server size={22} />,
+        },
+
+
     ];
+
 
 
     return (
 
         <section className="intel-section">
 
+
             <div className="section-header">
 
                 <h2>
                     Threat Intelligence
                 </h2>
+
 
                 <p>
                     Live intelligence generated from uploaded security logs
@@ -71,16 +97,19 @@ function ThreatIntelCards({ summary }) {
             </div>
 
 
+
+
             <div className="intel-grid">
 
-                {
 
-                    cards.map((card) => (
+                {
+                    cards.map((card)=>(
 
                         <div
                             className="intel-card"
                             key={card.title}
                         >
+
 
                             <div className="intel-icon">
 
@@ -88,34 +117,36 @@ function ThreatIntelCards({ summary }) {
 
                             </div>
 
+
+
                             <div>
 
                                 <span>
-
                                     {card.title}
-
                                 </span>
 
+
                                 <h3>
-
                                     {card.value}
-
                                 </h3>
 
                             </div>
 
+
                         </div>
 
                     ))
-
                 }
 
+
             </div>
+
 
         </section>
 
     );
 
 }
+
 
 export default ThreatIntelCards;

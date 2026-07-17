@@ -13,11 +13,13 @@ import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 
 import "./AttackMap.css";
 
+
 const highIcon = new L.DivIcon({
     className: "severity-marker",
     html: '<div class="marker high"></div>',
     iconSize: [18, 18],
 });
+
 
 const mediumIcon = new L.DivIcon({
     className: "severity-marker",
@@ -25,11 +27,13 @@ const mediumIcon = new L.DivIcon({
     iconSize: [18, 18],
 });
 
+
 const lowIcon = new L.DivIcon({
     className: "severity-marker",
     html: '<div class="marker low"></div>',
     iconSize: [18, 18],
 });
+
 
 function getMarkerIcon(severity) {
 
@@ -48,17 +52,28 @@ function getMarkerIcon(severity) {
 
 }
 
+
 function AttackMap({ detections }) {
 
+
     const locations = detections.filter(
+
         (item) =>
+
             item.latitude !== null &&
-            item.longitude !== null
+
+            item.longitude !== null &&
+
+            !item.is_private_ip
+
     );
+
+
 
     return (
 
         <div className="attack-map-container">
+
 
             <div className="chart-header">
 
@@ -68,6 +83,7 @@ function AttackMap({ detections }) {
                         Global Attack Map
                     </h2>
 
+
                     <p>
                         Geographic origin of detected attacks
                     </p>
@@ -76,108 +92,177 @@ function AttackMap({ detections }) {
 
             </div>
 
+
+
             {
 
-                locations.length === 0 ?
+                locations.length === 0
+
+                ?
 
                 (
 
                     <div className="map-empty">
 
-                        No GeoIP locations available.
+                        No public GeoIP locations available.
 
                     </div>
 
                 )
+
 
                 :
 
                 (
 
                     <MapContainer
-                        center={[20, 0]}
+
+                        center={[20,0]}
+
                         zoom={2}
+
                         scrollWheelZoom={true}
+
                         className="attack-map"
+
                     >
 
+
                         <TileLayer
+
                             attribution='&copy; OpenStreetMap contributors'
+
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+
                         />
+
+
 
                         {
 
-                            locations.map((attack) => (
+                            locations.map((attack)=>(
+
 
                                 <Marker
+
                                     key={attack.id}
+
                                     position={[
+
                                         attack.latitude,
+
                                         attack.longitude,
+
                                     ]}
-                                    icon={getMarkerIcon(attack.severity)}
+
+                                    icon={
+                                        getMarkerIcon(
+                                            attack.severity
+                                        )
+                                    }
+
                                 >
+
 
                                     <Popup>
 
+
                                         <strong>
 
-                                            {attack.attack_type}
+                                            {
+                                                attack.attack_type
+                                            }
 
                                         </strong>
 
-                                        <br /><br />
 
-                                        <b>Severity:</b>
+                                        <br />
+                                        <br />
+
+
+                                        <b>
+                                            Severity:
+                                        </b>
 
                                         {" "}
 
-                                        {attack.severity}
+                                        {
+                                            attack.severity
+                                        }
+
 
                                         <br />
 
-                                        <b>IP:</b>
+
+                                        <b>
+                                            IP:
+                                        </b>
 
                                         {" "}
 
-                                        {attack.source_ip}
+                                        {
+                                            attack.source_ip
+                                        }
+
 
                                         <br />
 
-                                        <b>Location:</b>
+
+                                        <b>
+                                            Location:
+                                        </b>
 
                                         {" "}
 
-                                        {attack.city || "Unknown"}
+                                        {
+                                            attack.city || "Unknown"
+                                        }
 
                                         {", "}
 
-                                        {attack.country || "Unknown"}
+                                        {
+                                            attack.country || "Unknown"
+                                        }
+
 
                                         <br />
 
-                                        <b>Endpoint:</b>
+
+                                        <b>
+                                            Endpoint:
+                                        </b>
 
                                         {" "}
 
-                                        {attack.request_path}
+                                        {
+                                            attack.request_path
+                                        }
+
 
                                         <br />
 
-                                        <b>Time:</b>
+
+                                        <b>
+                                            Time:
+                                        </b>
 
                                         {" "}
 
-                                        {attack.timestamp}
+                                        {
+                                            attack.timestamp
+                                        }
+
 
                                     </Popup>
 
+
                                 </Marker>
+
 
                             ))
 
                         }
+
 
                     </MapContainer>
 
@@ -185,10 +270,12 @@ function AttackMap({ detections }) {
 
             }
 
+
         </div>
 
     );
 
 }
+
 
 export default AttackMap;
