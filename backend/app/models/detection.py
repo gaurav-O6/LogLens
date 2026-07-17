@@ -33,6 +33,13 @@ class Detection(db.Model):
         index=True
     )
 
+    is_private_ip = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        index=True
+    )
+
     country = db.Column(
         db.String(100),
         nullable=True,

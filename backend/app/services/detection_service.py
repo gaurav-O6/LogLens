@@ -77,6 +77,10 @@ def save_detections(detections: list[dict]) -> list[Detection]:
 
             source_ip=source_ip,
 
+            is_private_ip=location.get(
+                "is_private_ip",
+                False
+            ),
 
             country=location.get(
                 "country"

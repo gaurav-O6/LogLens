@@ -5,6 +5,7 @@ import SummaryCards from "../components/SummaryCards";
 import ThreatIntelCards from "../components/ThreatIntelCards";
 import SeverityChart from "../components/SeverityChart";
 import AttackChart from "../components/AttackChart";
+import AttackMap from "../components/AttackMap";
 import DetectionTable from "../components/DetectionTable";
 import DetectionTimeline from "../components/DetectionTimeline";
 import TopAttackers from "../components/TopAttackers";
@@ -34,17 +35,14 @@ function Dashboard() {
                 await apiClient.get("/analysis/detections");
 
             setSummary(summaryResponse.data);
-
             setDetections(detectionResponse.data);
 
         }
-
         catch (error) {
 
             console.error(error);
 
         }
-
         finally {
 
             setLoading(false);
@@ -128,6 +126,27 @@ function Dashboard() {
                 summary &&
                 <ThreatIntelCards summary={summary} />
             }
+
+
+            <section>
+
+                <div className="section-header">
+
+                    <h2>
+                        Global Attack Map
+                    </h2>
+
+                    <p>
+                        Geographic visualization of detected attack sources
+                    </p>
+
+                </div>
+
+                <AttackMap
+                    detections={detections}
+                />
+
+            </section>
 
 
             <section>

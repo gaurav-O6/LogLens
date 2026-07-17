@@ -25,6 +25,8 @@ def detection_to_dict(detection):
 
         "source_ip": detection.source_ip,
 
+        "is_private_ip": detection.is_private_ip,
+
         # GeoIP information
         "country": detection.country,
         "city": detection.city,
@@ -189,7 +191,6 @@ def get_summary():
 
             "countries": country_count,
 
-            # Threat Intelligence
             "most_active_ip": most_active_ip,
 
             "most_active_country": most_active_country,
@@ -250,6 +251,7 @@ def export_csv():
             "Attack Type",
             "Severity",
             "Source IP",
+            "Private IP",
 
             "Country",
             "City",
@@ -280,6 +282,8 @@ def export_csv():
                 detection.severity,
 
                 detection.source_ip,
+
+                detection.is_private_ip,
 
                 detection.country,
 
