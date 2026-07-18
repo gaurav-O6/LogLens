@@ -4,12 +4,15 @@ from flask import (
     Blueprint,
     jsonify,
     request,
-    current_app
+    current_app,
 )
 
-from app.services.upload_service import save_uploaded_log
-from app.services.processing_service import ProcessingService
+from app.database.db import db
+from app.models.job import Job
 
+from app.services.upload_service import save_uploaded_log
+
+from app.queue.redis_queue import queue
 
 
 upload_bp = Blueprint(
@@ -19,31 +22,23 @@ upload_bp = Blueprint(
 )
 
 
-
-
 @upload_bp.route("/upload", methods=["POST"])
 def upload_log():
     """
-    Upload and analyze a log file.
+    Upload log file and create async processing job.
 
     Flow:
 
-    File Upload
+    Upload File
         ↓
     Save File
         ↓
-    Parse Logs (streaming)
+    Create Job
         ↓
-    Save Logs
+    Queue Worker
         ↓
-    Detect Threats
-        ↓
-    Save Detections
-        ↓
-    Return Summary
+    Return Job ID
     """
-
-
 
     if "file" not in request.files:
 
@@ -54,10 +49,7 @@ def upload_log():
         ), 400
 
 
-
-
     file = request.files["file"]
-
 
 
     if file.filename == "":
@@ -70,15 +62,9 @@ def upload_log():
 
 
 
-
-
     try:
 
-
-        filename = save_uploaded_log(
-            file
-        )
-
+        filename = save_uploaded_log(file)
 
 
         upload_folder = Path(
@@ -86,60 +72,61 @@ def upload_log():
         )
 
 
-
         file_path = upload_folder / filename
 
 
 
+        job = Job(
 
-        processor = ProcessingService()
+            filename=filename,
+
+            status="queued",
+
+            progress=0,
+
+        )
+
+
+        db.session.add(job)
+
+        db.session.commit()
 
 
 
-        result = processor.process_file(
-            file_path
+        queue.enqueue(
+            "app.workers.log_worker.process_log_job",
+            job.id,
+            str(file_path),
         )
 
 
 
-
-
         return jsonify(
+
             {
 
                 "message":
-                    "Log processed successfully.",
+                    "Log processing started.",
 
+
+                "job_id":
+                    job.id,
+
+
+                "status":
+                    job.status,
 
 
                 "filename":
                     filename,
 
-
-
-                "parsed_logs":
-                    result["parsed_count"],
-
-
-
-                "detections":
-                    result["detection_count"],
-
-
-
-                "summary":
-                    result["summary"],
-
             }
 
-        ), 200
-
-
+        ), 202
 
 
 
     except ValueError as error:
-
 
         return jsonify(
             {
@@ -149,16 +136,14 @@ def upload_log():
 
 
 
-
-
     except Exception as error:
 
-
         return jsonify(
+
             {
 
                 "error":
-                    "Processing failed.",
+                    "Upload failed.",
 
 
                 "details":
@@ -172,24 +157,13 @@ def upload_log():
 
 
 
-
-
-
-
-
 @upload_bp.route("/demo", methods=["GET"])
 def demo_log():
     """
-    Process preloaded demo attack log.
-
-    Uses:
-    sample_logs/attack_test.log
+    Queue demo attack log processing.
     """
 
-
-
     try:
-
 
 
         demo_file = (
@@ -201,7 +175,6 @@ def demo_log():
             / "attack_test.log"
 
         )
-
 
 
 
@@ -217,49 +190,57 @@ def demo_log():
 
 
 
+        job = Job(
 
-        processor = ProcessingService()
+            filename="attack_test.log",
+
+            status="queued",
+
+            progress=0,
+
+        )
+
+
+        db.session.add(job)
+
+        db.session.commit()
 
 
 
-        result = processor.process_file(
-            demo_file
+        queue.enqueue(
+
+            "app.workers.log_worker.process_log_job",
+
+            job.id,
+
+            str(demo_file),
+
         )
 
 
 
-
-
         return jsonify(
+
             {
 
                 "message":
-                    "Demo log processed successfully.",
+                    "Demo processing started.",
 
+
+                "job_id":
+                    job.id,
+
+
+                "status":
+                    job.status,
 
 
                 "filename":
-                    "attack_test.log",
-
-
-
-                "parsed_logs":
-                    result["parsed_count"],
-
-
-
-                "detections":
-                    result["detection_count"],
-
-
-
-                "summary":
-                    result["summary"]
+                    "attack_test.log"
 
             }
 
-        ), 200
-
+        ), 202
 
 
 
@@ -268,11 +249,11 @@ def demo_log():
 
 
         return jsonify(
+
             {
 
                 "error":
                     "Demo processing failed.",
-
 
 
                 "details":

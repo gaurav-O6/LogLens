@@ -1,16 +1,9 @@
 from datetime import datetime
 from pathlib import Path
 
-from app import create_app
-
 from app.database.db import db
 from app.models.job import Job
-
 from app.services.processing_service import ProcessingService
-
-
-
-app = create_app()
 
 
 
@@ -24,13 +17,18 @@ def process_log_job(
     Processes uploaded logs asynchronously.
     """
 
+    from app import create_app
+
+
+    app = create_app()
+
+
 
     with app.app_context():
 
 
-        job = Job.query.get(
-            job_id
-        )
+        job = Job.query.get(job_id)
+
 
 
         if not job:
@@ -53,8 +51,6 @@ def process_log_job(
 
 
 
-
-
             processor = ProcessingService()
 
 
@@ -64,8 +60,6 @@ def process_log_job(
                 Path(file_path)
 
             )
-
-
 
 
 
@@ -80,10 +74,7 @@ def process_log_job(
 
 
 
-
-
             return result
-
 
 
 
@@ -91,8 +82,9 @@ def process_log_job(
         except Exception as error:
 
 
-
             job.status = "failed"
+
+            job.progress = 0
 
             job.error_message = str(error)
 
