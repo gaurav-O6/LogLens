@@ -8,24 +8,19 @@ import {
     CartesianGrid,
 } from "recharts";
 
-
-
 function AttackChart({ attacks }) {
 
-
     const data = Object.entries(attacks || {}).map(
-        ([name,value]) => ({
-            name,
+        ([name, value]) => ({
+            displayName: name.replace(" (XSS)", ""),
+            originalName: name,
             value,
         })
     );
 
-
-
     return (
 
         <div className="chart-container">
-
 
             <div className="chart-header">
 
@@ -35,28 +30,22 @@ function AttackChart({ attacks }) {
 
             </div>
 
-
-
-
             <div className="chart-body">
 
-
-                <ResponsiveContainer width="100%" height={300}>
-
+                <ResponsiveContainer width="100%" height={340}>
 
                     <BarChart
 
                         data={data}
 
                         margin={{
-                            top:20,
-                            right:20,
-                            left:0,
-                            bottom:30
+                            top: 25,
+                            right: 20,
+                            left: 0,
+                            bottom: 30,
                         }}
 
                     >
-
 
                         <CartesianGrid
 
@@ -66,17 +55,15 @@ function AttackChart({ attacks }) {
 
                         />
 
-
-
                         <XAxis
 
-                            dataKey="name"
+                            dataKey="displayName"
 
                             interval={0}
 
                             tick={{
-                                fill:"#8b949e",
-                                fontSize:11
+                                fill: "#8b949e",
+                                fontSize: 11
                             }}
 
                             axisLine={false}
@@ -84,16 +71,14 @@ function AttackChart({ attacks }) {
                             tickLine={false}
 
                         />
-
-
 
                         <YAxis
 
                             allowDecimals={false}
 
                             tick={{
-                                fill:"#8b949e",
-                                fontSize:12
+                                fill: "#8b949e",
+                                fontSize: 12
                             }}
 
                             axisLine={false}
@@ -102,24 +87,24 @@ function AttackChart({ attacks }) {
 
                         />
 
-
-
                         <Tooltip
 
+                            labelFormatter={(_, payload) =>
+                                payload?.[0]?.payload?.originalName || ""
+                            }
+
                             cursor={{
-                                fill:"rgba(255,255,255,0.05)"
+                                fill: "rgba(255,255,255,0.05)"
                             }}
 
                             contentStyle={{
-                                background:"#161b22",
-                                border:"1px solid #30363d",
-                                borderRadius:"8px",
-                                color:"#ffffff"
+                                background: "#161b22",
+                                border: "1px solid #30363d",
+                                borderRadius: "8px",
+                                color: "#ffffff"
                             }}
 
                         />
-
-
 
                         <Bar
 
@@ -127,25 +112,20 @@ function AttackChart({ attacks }) {
 
                             fill="#10a37f"
 
-                            radius={[6,6,0,0]}
+                            radius={[6, 6, 0, 0]}
 
                         />
 
-
                     </BarChart>
-
 
                 </ResponsiveContainer>
 
-
             </div>
-
 
         </div>
 
     );
 
 }
-
 
 export default AttackChart;
