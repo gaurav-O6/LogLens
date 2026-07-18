@@ -68,7 +68,12 @@ function DetectionTimeline({ timeline }) {
 
 
 
-                <div className="timeline-stats">
+                <div 
+                    className="timeline-stats"
+                    style={{
+                        transform: "translateY(8px)"
+                    }}
+                >
 
                     <span>
                         Events: {totalEvents}
