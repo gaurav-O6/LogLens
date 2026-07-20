@@ -5,7 +5,6 @@ import {
     AlertTriangle,
     BarChart3,
     History,
-    Settings
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -15,44 +14,39 @@ import "./sidebar.css";
 
 const menuItems = [
     {
-        name:"Overview",
-        icon:LayoutDashboard,
-        path:"/"
+        name: "Overview",
+        icon: LayoutDashboard,
+        path: "/"
     },
     {
-        name:"Upload Logs",
-        icon:UploadCloud,
-        path:"/upload"
+        name: "Upload Logs",
+        icon: UploadCloud,
+        path: "/upload"
     },
     {
-        name:"Threats",
-        icon:AlertTriangle,
-        path:"/threats"
+        name: "Threats",
+        icon: AlertTriangle,
+        path: "/threats"
     },
     {
-        name:"Analytics",
-        icon:BarChart3,
-        path:"/analytics"
+        name: "Analytics",
+        icon: BarChart3,
+        path: "/analytics"
     },
     {
-        name:"History",
-        icon:History,
-        path:"/history"
-    },
-    {
-        name:"Settings",
-        icon:Settings,
-        path:"/settings"
+        name: "History",
+        icon: History,
+        path: "/history"
     }
 ];
 
 
-function Sidebar(){
+function Sidebar() {
 
     const navigate = useNavigate();
 
 
-    return(
+    return (
 
         <aside className="sidebar">
 
@@ -60,7 +54,7 @@ function Sidebar(){
             <div className="sidebar-header">
 
                 <div className="logo-icon">
-                    <Shield size={22}/>
+                    <Shield size={22} />
                 </div>
 
 
@@ -79,20 +73,20 @@ function Sidebar(){
             <nav className="sidebar-nav">
 
                 {
-                    menuItems.map((item)=>{
+                    menuItems.map((item) => {
 
-                        const Icon=item.icon;
+                        const Icon = item.icon;
 
 
-                        return(
+                        return (
 
                             <div
                                 key={item.name}
                                 className="nav-item"
-                                onClick={()=>navigate(item.path)}
+                                onClick={() => navigate(item.path)}
                             >
 
-                                <Icon size={18}/>
+                                <Icon size={18} />
 
                                 <span>
                                     {item.name}
