@@ -1,0 +1,5 @@
+[33m612a0bc[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m feat(log-processing): add async upload workflow with Redis, RQ, job polling and demo log support
+[33mfa3cf55[m feat: finalize analytics dashboard
+[33mde1c7f8[m docs: add application screenshots
+[33m2494e0e[m feat(ui): add dynamic topbar based on current route
+[33m13509ef[m feat(ui): highlight active sidebar navigation
