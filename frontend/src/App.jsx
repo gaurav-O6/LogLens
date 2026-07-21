@@ -5,8 +5,7 @@ import {
 } from "react-router-dom";
 
 
-import Layout from "./components/layout/Layout";
-
+import Layout from "./components/layout/layout";
 
 import Dashboard from "./pages/Dashboard";
 import UploadLogs from "./pages/UploadLogs";

@@ -1,15 +1,72 @@
-version: "3.9"
-
 services:
-  db:
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: loglens-backend
+
+    command: gunicorn -w 4 -b 0.0.0.0:5000 run:app
+
+    ports:
+      - "5000:5000"
+
+    volumes:
+      - ./backend:/app
+      - ./sample_logs:/sample_logs
+
+    env_file:
+      - ./.env
+
+    depends_on:
+      - postgres
+      - redis
+
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+
+    container_name: loglens-worker
+
+    command: rq worker --worker-class rq.worker.SimpleWorker log_processing
+
+    volumes:
+      - ./backend:/app
+      - ./sample_logs:/sample_logs
+
+    env_file:
+      - ./.env
+
+    depends_on:
+      - redis
+      - postgres
+
+
+  frontend:
+    build:
+      context: ./frontend
+
+    container_name: loglens-frontend
+
+    ports:
+      - "3000:80"
+
+    depends_on:
+      - backend
+
+
+  postgres:
     image: postgres:16
+
     container_name: loglens-postgres
-    restart: unless-stopped
 
     environment:
+      POSTGRES_DB: loglens
       POSTGRES_USER: loglens
       POSTGRES_PASSWORD: loglens
-      POSTGRES_DB: loglens
 
     ports:
       - "5432:5432"
@@ -17,13 +74,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+
   redis:
     image: redis:7-alpine
+
     container_name: loglens-redis
-    restart: unless-stopped
 
     ports:
       - "6379:6379"
+
 
 volumes:
   postgres_data:

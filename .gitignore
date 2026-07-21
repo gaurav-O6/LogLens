@@ -5,11 +5,18 @@ __pycache__/
 # Virtual Environment
 venv/
 
-# Environment variables
+# Environment Variables
 .env
+
+# Uploads
+uploads/
 
 # VS Code
 .vscode/
 
-# macOS
+# Frontend
+node_modules/
+dist/
+
+# OS
 .DS_Store

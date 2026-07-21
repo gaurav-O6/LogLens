@@ -12,7 +12,7 @@ import TopAttackers from "../components/TopAttackers";
 import InvestigationPanel from "../components/InvestigationPanel";
 import ThreatFilterBar from "../components/ThreatFilterBar";
 
-import "./Dashboard.css";
+import "./dashboard.css";
 
 
 function Dashboard() {

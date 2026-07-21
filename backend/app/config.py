@@ -11,7 +11,7 @@ class Config:
     # Database
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
-        "postgresql+psycopg://loglens:loglens@db:5432/loglens",
+        "postgresql+psycopg://loglens:loglens@postgres:5432/loglens",
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
