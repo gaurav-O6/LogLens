@@ -1813,4 +1813,176 @@ td{
 
     border-color:#10a37f;
 
+} 
+
+/* ==========================================================
+   HISTORY PAGE
+========================================================== */
+
+.history-summary{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+}
+
+.history-table-card{
+    background:#111827;
+    border:1px solid #30363d;
+    border-radius:18px;
+    overflow:hidden;
+}
+
+.history-header{
+    padding:22px 24px;
+    border-bottom:1px solid #30363d;
+}
+
+.history-header-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+}
+
+.history-header h2{
+    color:#ffffff;
+    font-size:18px;
+    font-weight:700;
+    line-height:1.2;
+    margin:0;
+}
+
+.history-header p{
+    margin-top:6px;
+    color:#8b949e;
+    font-size:14px;
+    line-height:1.6;
+}
+
+.history-refresh-btn{
+    margin-left:auto;
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    padding:10px 18px;
+
+    background:#161b22;
+    color:#e6edf3;
+
+    border:1px solid #30363d;
+    border-radius:12px;
+
+    font-size:14px;
+    font-weight:600;
+
+    transition:.2s ease;
+
+    flex-shrink:0;
+}
+
+.history-refresh-btn:hover{
+    background:#1f2937;
+    border-color:#10a37f;
+    color:#ffffff;
+}
+
+.history-refresh-btn svg{
+    width:16px;
+    height:16px;
+}
+
+.history-table-container{
+    overflow-x:auto;
+}
+
+.history-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.history-table thead{
+    background:#0d1117;
+}
+
+.history-table th{
+    padding:16px;
+    text-align:left;
+    color:#8b949e;
+    font-size:13px;
+    font-weight:600;
+    border-bottom:1px solid #30363d;
+}
+
+.history-table td{
+    padding:16px;
+    color:#e6edf3;
+    border-bottom:1px solid #20252d;
+}
+
+.history-table tbody tr{
+    transition:.18s ease;
+}
+
+.history-table tbody tr:hover{
+    background:#18202c;
+}
+
+.status-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    min-width:90px;
+
+    padding:6px 12px;
+
+    border-radius:999px;
+
+    font-size:12px;
+    font-weight:700;
+}
+
+.status-completed{
+    color:#22c55e;
+    background:rgba(34,197,94,.14);
+}
+
+.status-processing{
+    color:#3b82f6;
+    background:rgba(59,130,246,.14);
+}
+
+.status-queued{
+    color:#f59e0b;
+    background:rgba(245,158,11,.14);
+}
+
+.status-failed{
+    color:#ef4444;
+    background:rgba(239,68,68,.14);
+}
+
+@media(max-width:992px){
+
+    .history-summary{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media(max-width:768px){
+
+    .history-header-top{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .history-refresh-btn{
+        width:100%;
+        justify-content:center;
+        margin-left:0;
+    }
+
 }

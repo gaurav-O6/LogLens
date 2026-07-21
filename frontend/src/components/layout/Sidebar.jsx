@@ -7,49 +7,50 @@ import {
     History,
 } from "lucide-react";
 
-import { useNavigate } from "react-router-dom";
+import {
+    useNavigate,
+    useLocation,
+} from "react-router-dom";
 
 import "./sidebar.css";
-
 
 const menuItems = [
     {
         name: "Overview",
         icon: LayoutDashboard,
-        path: "/"
+        path: "/",
     },
     {
         name: "Upload Logs",
         icon: UploadCloud,
-        path: "/upload"
+        path: "/upload",
     },
     {
         name: "Threats",
         icon: AlertTriangle,
-        path: "/threats"
+        path: "/threats",
     },
     {
         name: "Analytics",
         icon: BarChart3,
-        path: "/analytics"
+        path: "/analytics",
     },
     {
         name: "History",
         icon: History,
-        path: "/history"
-    }
+        path: "/history",
+    },
 ];
-
 
 function Sidebar() {
 
     const navigate = useNavigate();
 
+    const location = useLocation();
 
     return (
 
         <aside className="sidebar">
-
 
             <div className="sidebar-header">
 
@@ -57,32 +58,36 @@ function Sidebar() {
                     <Shield size={22} />
                 </div>
 
-
                 <div>
+
                     <h2>LogLens</h2>
 
                     <span>
                         Security Operations
                     </span>
+
                 </div>
 
             </div>
 
-
-
             <nav className="sidebar-nav">
 
                 {
+
                     menuItems.map((item) => {
 
                         const Icon = item.icon;
 
+                        const isActive =
+                            location.pathname === item.path;
 
                         return (
 
                             <div
                                 key={item.name}
-                                className="nav-item"
+                                className={`nav-item ${
+                                    isActive ? "active" : ""
+                                }`}
                                 onClick={() => navigate(item.path)}
                             >
 
@@ -97,11 +102,10 @@ function Sidebar() {
                         );
 
                     })
+
                 }
 
             </nav>
-
-
 
             <div className="sidebar-footer">
 
@@ -109,12 +113,10 @@ function Sidebar() {
 
             </div>
 
-
         </aside>
 
     );
 
 }
-
 
 export default Sidebar;
