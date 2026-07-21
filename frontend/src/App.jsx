@@ -13,7 +13,7 @@ import UploadLogs from "./pages/UploadLogs";
 import Threats from "./pages/Threats";
 import Analytics from "./pages/Analytics";
 import History from "./pages/History";
-import Settings from "./pages/Settings";
+
 
 
 
@@ -59,10 +59,7 @@ function App(){
                     />
 
 
-                    <Route
-                        path="/settings"
-                        element={<Settings />}
-                    />
+                    
 
 
                 </Routes>
