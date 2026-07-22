@@ -23,21 +23,19 @@ def process_log_job(
     app = create_app()
 
 
-
     with app.app_context():
 
 
-        job = Job.query.get(job_id)
-
-
-
-        if not job:
-
-            return
-
-
-
         try:
+
+            job = Job.query.get(
+                job_id
+            )
+
+
+            if not job:
+                return
+
 
 
             job.status = "processing"
@@ -54,7 +52,6 @@ def process_log_job(
             processor = ProcessingService()
 
 
-
             result = processor.process_file(
 
                 Path(file_path)
@@ -63,11 +60,17 @@ def process_log_job(
 
 
 
+            job = Job.query.get(
+                job_id
+            )
+
+
             job.status = "completed"
 
             job.progress = 100
 
             job.completed_at = datetime.utcnow()
+
 
 
             db.session.commit()
@@ -78,19 +81,37 @@ def process_log_job(
 
 
 
-
         except Exception as error:
 
 
-            job.status = "failed"
-
-            job.progress = 0
-
-            job.error_message = str(error)
+            db.session.rollback()
 
 
-            db.session.commit()
+
+            job = Job.query.get(
+                job_id
+            )
+
+
+            if job:
+
+                job.status = "failed"
+
+                job.progress = 0
+
+                job.error_message = str(
+                    error
+                )
+
+
+                db.session.commit()
 
 
 
             raise error
+
+
+
+        finally:
+
+            db.session.remove()

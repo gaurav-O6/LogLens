@@ -4,9 +4,7 @@ from app.models.detection import Detection
 from app.services.geoip_service import GeoIPService
 
 
-
 geoip_service = GeoIPService()
-
 
 
 def save_detections(detections: list[dict]) -> list[Detection]:
@@ -15,17 +13,15 @@ def save_detections(detections: list[dict]) -> list[Detection]:
 
     Designed for streaming pipeline batches.
     Adds GeoIP enrichment before saving.
+
+    Does not commit.
+    Transaction is controlled by the worker.
     """
-
-
 
     detection_entries = []
 
 
-
-
     for detection in detections:
-
 
 
         source_ip = (
@@ -39,29 +35,22 @@ def save_detections(detections: list[dict]) -> list[Detection]:
         )
 
 
-
-
         existing = Detection.query.filter_by(
 
-
             source_ip=source_ip,
-
 
             attack_type=detection.get(
                 "attack_type",
                 ""
             ),
 
-
             request_path=detection.get(
                 "request_path"
             ),
 
-
             timestamp=detection.get(
                 "timestamp"
             ),
-
 
             matched_pattern=detection.get(
                 "matched_pattern"
@@ -70,14 +59,8 @@ def save_detections(detections: list[dict]) -> list[Detection]:
         ).first()
 
 
-
-
         if existing:
-
             continue
-
-
-
 
 
         location = geoip_service.lookup(
@@ -85,23 +68,17 @@ def save_detections(detections: list[dict]) -> list[Detection]:
         )
 
 
-
-
-
         entry = Detection(
-
 
             attack_type=detection.get(
                 "attack_type",
                 ""
             ),
 
-
             severity=detection.get(
                 "severity",
                 ""
             ),
-
 
             source_ip=source_ip,
 
@@ -132,11 +109,9 @@ def save_detections(detections: list[dict]) -> list[Detection]:
             ),
 
 
-
             timestamp=detection.get(
                 "timestamp"
             ),
-
 
 
             matched_pattern=detection.get(
@@ -144,11 +119,9 @@ def save_detections(detections: list[dict]) -> list[Detection]:
             ),
 
 
-
             http_method=detection.get(
                 "http_method"
             ),
-
 
 
             request_path=detection.get(
@@ -156,11 +129,9 @@ def save_detections(detections: list[dict]) -> list[Detection]:
             ),
 
 
-
             status_code=detection.get(
                 "status_code"
             ),
-
 
 
             raw_log=detection.get(
@@ -170,27 +141,19 @@ def save_detections(detections: list[dict]) -> list[Detection]:
         )
 
 
-
         detection_entries.append(
             entry
         )
 
 
-
-
-
     if detection_entries:
-
 
         db.session.add_all(
             detection_entries
         )
 
 
-        db.session.commit()
-
-
-
+        db.session.flush()
 
 
     return detection_entries

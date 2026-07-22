@@ -2,21 +2,18 @@ from app.database.db import db
 from app.models.log_entry import LogEntry
 
 
-
 def save_logs(parsed_logs: list[dict]) -> list[dict]:
     """
     Save a batch of log entries.
 
     Designed for streaming pipeline batches.
+    Does not commit.
+    Transaction is controlled by the worker.
     """
-
 
     new_logs = []
 
-
-
     for log in parsed_logs:
-
 
         existing = LogEntry.query.filter_by(
 
@@ -53,13 +50,8 @@ def save_logs(parsed_logs: list[dict]) -> list[dict]:
         ).first()
 
 
-
         if existing:
-
             continue
-
-
-
 
 
         entry = LogEntry(
@@ -97,7 +89,6 @@ def save_logs(parsed_logs: list[dict]) -> list[dict]:
         )
 
 
-
         db.session.add(
             entry
         )
@@ -108,12 +99,9 @@ def save_logs(parsed_logs: list[dict]) -> list[dict]:
         )
 
 
-
-
     if new_logs:
 
-        db.session.commit()
-
+        db.session.flush()
 
 
     return new_logs
