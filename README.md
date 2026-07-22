@@ -275,3 +275,5 @@ Computer Engineering
 License
 
 This project is developed for educational and cybersecurity learning purposes.
+
+Deployment Note: This application is hosted using free cloud services. If the backend has been inactive, the first request may take up to one minute while the service starts. After startup, the application functions normally.
