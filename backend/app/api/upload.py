@@ -102,8 +102,12 @@ def demo_log():
 
     try:
 
-        # Demo logs are mounted into the container at /sample_logs
-        demo_file = Path("/sample_logs/attack_test.log")
+        demo_file = (
+            Path(current_app.root_path)
+            .parent
+            / "sample_logs"
+            / "attack_test.log"
+        )
 
         if not demo_file.exists():
             return jsonify(
