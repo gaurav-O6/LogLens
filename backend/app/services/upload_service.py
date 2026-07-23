@@ -1,4 +1,5 @@
 from pathlib import Path
+import uuid
 
 from flask import current_app
 from werkzeug.datastructures import FileStorage
@@ -8,35 +9,101 @@ from werkzeug.utils import secure_filename
 ALLOWED_EXTENSIONS = {".log"}
 
 
+
 def save_uploaded_log(file: FileStorage) -> str:
     """
-    Validate and save an uploaded log file.
+    Validate and save uploaded log file safely.
 
-    Args:
-        file: Uploaded log file.
-
-    Returns:
-        The saved filename.
-
-    Raises:
-        ValueError: If the uploaded file is invalid.
+    Uses chunked writing for large log files.
     """
 
     if file.filename is None or file.filename == "":
-        raise ValueError("No file selected.")
+        raise ValueError(
+            "No file selected."
+        )
 
-    filename = secure_filename(file.filename)
 
-    extension = Path(filename).suffix.lower()
+    original_filename = secure_filename(
+        file.filename
+    )
+
+
+    extension = Path(
+        original_filename
+    ).suffix.lower()
+
 
     if extension not in ALLOWED_EXTENSIONS:
-        raise ValueError("Only .log files are allowed.")
+        raise ValueError(
+            "Only .log files are allowed."
+        )
 
-    upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
-    upload_folder.mkdir(exist_ok=True)
+
+    filename = (
+        f"{Path(original_filename).stem}_"
+        f"{uuid.uuid4().hex[:8]}"
+        f"{extension}"
+    )
+
+
+    upload_folder = Path(
+        current_app.config["UPLOAD_FOLDER"]
+    )
+
+
+    upload_folder.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
 
     save_path = upload_folder / filename
 
-    file.save(save_path)
+
+
+    print(
+        "[UPLOAD] Saving file:",
+        filename
+    )
+
+
+
+    total_bytes = 0
+
+
+
+    with open(save_path, "wb") as destination:
+
+
+        while True:
+
+
+            chunk = file.stream.read(
+                1024 * 1024
+            )
+
+
+            if not chunk:
+                break
+
+
+
+            destination.write(
+                chunk
+            )
+
+
+            total_bytes += len(chunk)
+
+
+
+    print(
+        "[UPLOAD] Saved:",
+        filename,
+        total_bytes,
+        "bytes"
+    )
+
+
 
     return filename

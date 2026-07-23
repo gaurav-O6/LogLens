@@ -6,12 +6,10 @@ const api = axios.create({
 
     baseURL: import.meta.env.VITE_API_URL,
 
-    // Increased for large log uploads (99MB+)
-    // Allows upload + backend processing request time
+    // Large log uploads need more time
     timeout: 300000,
 
 });
-
 
 
 
@@ -32,18 +30,26 @@ api.interceptors.request.use(
         );
 
 
+        if (config.data instanceof FormData) {
+
+
+            console.log(
+                "UPLOAD REQUEST DETECTED"
+            );
+
+
+        }
+
+
+
         return config;
 
 
     },
 
+
+
     (error) => {
-
-
-        console.error(
-            "REQUEST SETUP ERROR:",
-            error
-        );
 
 
         return Promise.reject(error);
@@ -97,21 +103,14 @@ api.interceptors.response.use(
 
 
             console.error(
-
-                "Status:",
-
+                "STATUS:",
                 error.response.status
-
             );
 
 
-
             console.error(
-
-                "Data:",
-
+                "DATA:",
                 error.response.data
-
             );
 
 
@@ -123,18 +122,13 @@ api.interceptors.response.use(
 
 
             console.error(
-
-                "No response received"
-
+                "NO RESPONSE RECEIVED"
             );
 
 
             console.error(
-
-                "Request:",
-                
+                "REQUEST:",
                 error.request
-
             );
 
 
@@ -146,11 +140,8 @@ api.interceptors.response.use(
 
 
             console.error(
-
-                "Error:",
-                
+                "MESSAGE:",
                 error.message
-
             );
 
 
