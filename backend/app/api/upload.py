@@ -7,7 +7,6 @@ from flask import (
     current_app,
 )
 
-
 from app.database.db import db
 from app.models.job import Job
 from app.services.upload_service import save_uploaded_log
@@ -19,6 +18,7 @@ upload_bp = Blueprint(
     __name__,
     url_prefix="/api/v1/logs",
 )
+
 
 
 def enqueue_processing(job_id, file_path):
@@ -37,17 +37,25 @@ def enqueue_processing(job_id, file_path):
 
         return rq_job
 
-    except RedisError as error:
+
+    except Exception as error:
 
         raise RuntimeError(
             f"Redis queue unavailable: {error}"
         )
 
 
+
+
+
 @upload_bp.route("/upload", methods=["POST"])
 def upload_log():
+    """
+    Upload log file and queue processing.
+    """
 
     if "file" not in request.files:
+
         return jsonify(
             {
                 "error": "No file provided."
@@ -55,10 +63,13 @@ def upload_log():
         ), 400
 
 
+
     file = request.files["file"]
 
 
+
     if file.filename == "":
+
         return jsonify(
             {
                 "error": "No file selected."
@@ -66,9 +77,12 @@ def upload_log():
         ), 400
 
 
+
     try:
 
+
         filename = save_uploaded_log(file)
+
 
 
         upload_folder = Path(
@@ -79,6 +93,7 @@ def upload_log():
         file_path = upload_folder / filename
 
 
+
         job = Job(
             filename=filename,
             status="queued",
@@ -87,7 +102,9 @@ def upload_log():
 
 
         db.session.add(job)
+
         db.session.commit()
+
 
 
         enqueue_processing(
@@ -96,11 +113,12 @@ def upload_log():
         )
 
 
+
         return jsonify(
             {
                 "message": "Log processing started.",
                 "job_id": job.id,
-                "status": "queued",
+                "status": job.status,
                 "filename": filename,
             }
         ), 202
@@ -113,6 +131,7 @@ def upload_log():
         db.session.rollback()
 
 
+
         return jsonify(
             {
                 "error": "Upload failed.",
@@ -123,8 +142,14 @@ def upload_log():
 
 
 
+
+
+
 @upload_bp.route("/demo", methods=["GET"])
 def demo_log():
+    """
+    Queue demo attack log processing.
+    """
 
     try:
 
@@ -137,6 +162,7 @@ def demo_log():
         )
 
 
+
         if not demo_file.exists():
 
             return jsonify(
@@ -144,7 +170,8 @@ def demo_log():
                     "error": "Demo log file not found.",
                     "searched_path": str(demo_file),
                 }
-            ),404
+            ), 404
+
 
 
 
@@ -155,8 +182,11 @@ def demo_log():
         )
 
 
+
         db.session.add(job)
+
         db.session.commit()
+
 
 
 
@@ -167,14 +197,16 @@ def demo_log():
 
 
 
+
         return jsonify(
             {
                 "message": "Demo processing started.",
                 "job_id": job.id,
-                "status": "queued",
+                "status": job.status,
                 "filename": "attack_test.log",
             }
-        ),202
+        ), 202
+
 
 
 
@@ -184,9 +216,10 @@ def demo_log():
         db.session.rollback()
 
 
+
         return jsonify(
             {
                 "error": "Demo processing failed.",
                 "details": str(error),
             }
-        ),500
+        ), 500
