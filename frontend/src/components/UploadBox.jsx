@@ -27,6 +27,20 @@ function UploadBox({ onComplete }) {
 
 
 
+    const stopPolling = () => {
+
+        if (intervalRef.current) {
+
+            clearInterval(intervalRef.current);
+
+            intervalRef.current = null;
+
+        }
+
+    };
+
+
+
     useEffect(() => {
 
         return () => {
@@ -41,15 +55,117 @@ function UploadBox({ onComplete }) {
 
 
 
-    const stopPolling = () => {
+    const checkJobStatus = async (jobId) => {
 
-        if(intervalRef.current){
 
-            clearInterval(
-                intervalRef.current
+        try {
+
+
+            const response =
+                await api.get(
+                    `/jobs/${jobId}`
+                );
+
+
+            const job =
+                response.data;
+
+
+            console.log(
+                "JOB STATUS:",
+                job
             );
 
-            intervalRef.current = null;
+
+            setStatus(
+                `${job.status.toUpperCase()} (${job.progress || 0}%)`
+            );
+
+
+
+            if(job.status === "completed") {
+
+
+                stopPolling();
+
+
+                setResult({
+
+                    filename:
+                        job.filename,
+
+                    status:
+                        job.status,
+
+                });
+
+
+                setLoading(false);
+
+
+
+                if(onComplete){
+
+                    onComplete();
+
+                }
+
+
+                return true;
+
+            }
+
+
+
+
+
+            if(job.status === "failed") {
+
+
+                stopPolling();
+
+
+                setLoading(false);
+
+
+                setError(
+                    job.error ||
+                    "Processing failed."
+                );
+
+
+                return true;
+
+            }
+
+
+            return false;
+
+
+        }
+
+
+        catch(error){
+
+
+            console.error(
+                "JOB STATUS ERROR:",
+                error
+            );
+
+
+            stopPolling();
+
+
+            setLoading(false);
+
+
+            setError(
+                "Unable to check job status."
+            );
+
+
+            return true;
 
         }
 
@@ -60,128 +176,49 @@ function UploadBox({ onComplete }) {
 
 
 
-    const pollJobStatus = (jobId) => {
+
+    const pollJobStatus = async (jobId) => {
 
 
         stopPolling();
 
 
-        intervalRef.current = setInterval(
-            async () => {
+        // immediate check
 
-
-                try {
-
-
-                    const response =
-                        await api.get(
-                            `/jobs/${jobId}`
-                        );
-
-
-                    const job =
-                        response.data;
+        const finished =
+            await checkJobStatus(jobId);
 
 
 
-                    console.log(
-                        "JOB STATUS:",
-                        job
-                    );
+        if(finished){
 
+            return;
 
-
-                    setStatus(
-                        `${job.status.toUpperCase()} (${job.progress || 0}%)`
-                    );
+        }
 
 
 
 
+        intervalRef.current =
+            setInterval(
+                async () => {
 
-                    if(job.status === "completed"){
 
+                    const done =
+                        await checkJobStatus(jobId);
+
+
+
+                    if(done){
 
                         stopPolling();
-
-
-                        setResult({
-
-                            filename:
-                                job.filename,
-
-                            status:
-                                job.status,
-
-                        });
-
-
-
-                        setLoading(false);
-
-
-
-                        if(onComplete){
-
-                            onComplete();
-
-                        }
-
-
-                    }
-
-                    else if(job.status === "failed"){
-
-
-
-                        stopPolling();
-
-
-                        setLoading(false);
-
-
-
-                        setError(
-                            job.error ||
-                            "Processing failed."
-                        );
-
 
                     }
 
 
-
-                }
-
-                catch(error){
-
-
-                    console.error(
-                        "JOB POLLING ERROR:",
-                        error
-                    );
-
-
-
-                    stopPolling();
-
-
-                    setLoading(false);
-
-
-
-                    setError(
-                        "Unable to check job status."
-                    );
-
-
-                }
-
-
-            },
-            3000
-        );
-
+                },
+                3000
+            );
 
     };
 
@@ -192,10 +229,9 @@ function UploadBox({ onComplete }) {
 
 
 
-
     const startProcessing = async (
         endpoint,
-        options = {}
+        options={}
     ) => {
 
 
@@ -233,7 +269,6 @@ function UploadBox({ onComplete }) {
 
 
 
-
             console.log(
                 "UPLOAD RESPONSE:",
                 response.data
@@ -241,10 +276,8 @@ function UploadBox({ onComplete }) {
 
 
 
-
             const jobId =
                 response.data.job_id;
-
 
 
 
@@ -258,12 +291,9 @@ function UploadBox({ onComplete }) {
 
 
 
-
-
             setStatus(
                 "Job queued..."
             );
-
 
 
             pollJobStatus(jobId);
@@ -276,16 +306,13 @@ function UploadBox({ onComplete }) {
         catch(error){
 
 
-
             console.error(
                 "UPLOAD ERROR:",
                 error
             );
 
 
-
             setLoading(false);
-
 
 
             setError(
@@ -298,7 +325,6 @@ function UploadBox({ onComplete }) {
 
 
     };
-
 
 
 
@@ -322,7 +348,6 @@ function UploadBox({ onComplete }) {
 
 
 
-
         const formData =
             new FormData();
 
@@ -335,7 +360,6 @@ function UploadBox({ onComplete }) {
 
 
 
-
         startProcessing(
             "/logs/upload",
             {
@@ -345,20 +369,14 @@ function UploadBox({ onComplete }) {
                 data:formData,
 
                 headers:{
-
                     "Content-Type":
                         "multipart/form-data",
-
                 },
 
             }
-
         );
 
-
     };
-
-
 
 
 
@@ -372,17 +390,11 @@ function UploadBox({ onComplete }) {
         startProcessing(
             "/logs/demo",
             {
-
                 method:"GET",
-
             }
-
         );
 
-
     };
-
-
 
 
 
@@ -398,18 +410,14 @@ function UploadBox({ onComplete }) {
             <UploadCloud size={48}/>
 
 
-
             <h2>
                 Upload Security Logs
             </h2>
 
 
-
             <p>
                 Supports Apache / Nginx .log files
             </p>
-
-
 
 
 
@@ -432,7 +440,6 @@ function UploadBox({ onComplete }) {
                 />
 
 
-
                 <span>
 
                     {
@@ -449,15 +456,9 @@ function UploadBox({ onComplete }) {
 
 
 
-
-
-
             <button
-
                 onClick={handleUpload}
-
                 disabled={loading}
-
             >
 
                 {
@@ -466,22 +467,15 @@ function UploadBox({ onComplete }) {
                     : "Upload & Analyze"
                 }
 
-
             </button>
 
 
 
 
 
-
-
-
             <button
-
                 onClick={handleDemoLoad}
-
                 disabled={loading}
-
             >
 
                 {
@@ -490,11 +484,7 @@ function UploadBox({ onComplete }) {
                     : "Load Demo Log"
                 }
 
-
             </button>
-
-
-
 
 
 
@@ -515,26 +505,19 @@ function UploadBox({ onComplete }) {
 
 
 
-
-
-
             {
                 result &&
 
                 <div className="upload-result success">
 
-
                     <CheckCircle size={20}/>
-
 
 
                     <div>
 
-
                         <strong>
                             Analysis Complete
                         </strong>
-
 
 
                         <p>
@@ -542,16 +525,11 @@ function UploadBox({ onComplete }) {
                         </p>
 
 
-
-
                         <button
                             onClick={onComplete}
                         >
-
                             View Dashboard
-
                         </button>
-
 
 
                     </div>
@@ -559,10 +537,7 @@ function UploadBox({ onComplete }) {
 
                 </div>
 
-
             }
-
-
 
 
 
@@ -575,9 +550,7 @@ function UploadBox({ onComplete }) {
 
                 <div className="upload-result error">
 
-
                     <AlertCircle size={20}/>
-
 
 
                     <span>
@@ -587,12 +560,7 @@ function UploadBox({ onComplete }) {
 
                 </div>
 
-
             }
-
-
-
-
 
 
 
@@ -601,7 +569,6 @@ function UploadBox({ onComplete }) {
     );
 
 }
-
 
 
 export default UploadBox;
