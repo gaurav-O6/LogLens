@@ -7,14 +7,19 @@ services:
 
     container_name: loglens-backend
 
-    command: gunicorn -w 4 -b 0.0.0.0:5000 run:app
+    command: >
+      gunicorn
+      --workers 4
+      --bind 0.0.0.0:5000
+      --timeout 600
+      run:app
 
     ports:
       - "5000:5000"
 
     volumes:
       - ./backend:/app
-      - ./sample_logs:/sample_logs
+      - ./backend/sample_logs:/sample_logs
 
     env_file:
       - ./.env
@@ -31,11 +36,14 @@ services:
 
     container_name: loglens-worker
 
-    command: rq worker --worker-class rq.worker.SimpleWorker log_processing
+    command: >
+      rq worker
+      --worker-class rq.worker.SimpleWorker
+      log_processing
 
     volumes:
       - ./backend:/app
-      - ./sample_logs:/sample_logs
+      - ./backend/sample_logs:/sample_logs
 
     env_file:
       - ./.env

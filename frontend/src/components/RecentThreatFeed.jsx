@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+
 import {
     ShieldAlert,
     MapPin,
@@ -8,43 +9,102 @@ import {
 
 import "./RecentThreatFeed.css";
 
+
 function RecentThreatFeed({ detections = [] }) {
 
-    const recentThreats = [...detections]
-        .slice(0, 10);
+
+    /*
+        Backend pagination returns:
+
+        {
+            items: [],
+            page: 1,
+            pages: 200,
+            total: 2000000
+        }
+
+        Older responses returned:
+
+        []
+    */
+
+    const threatList = Array.isArray(detections)
+
+        ? detections
+
+        : detections?.items || [];
+
+
+
+
+    const recentThreats = [...threatList]
+        .slice(0,10);
+
+
+
+
 
     return (
 
+
         <div className="recent-feed">
+
+
 
             <div className="recent-feed-header">
 
+
+
                 <div>
+
 
                     <h2>
                         Recent Threat Feed
                     </h2>
 
+
                     <p>
                         Latest detected security events
                     </p>
 
+
                 </div>
 
+
+
+
+
                 <Link
+
                     to="/threats"
+
                     className="view-all-link"
+
                 >
+
                     View All
 
                     <ArrowRight size={16}/>
+
                 </Link>
+
+
 
             </div>
 
 
+
+
+
+
+
+
             {
-                recentThreats.length === 0 ?
+                recentThreats.length === 0
+
+
+                ?
+
 
                 (
 
@@ -56,113 +116,219 @@ function RecentThreatFeed({ detections = [] }) {
 
                 )
 
+
+
                 :
+
+
 
                 (
 
                     <div className="feed-list">
 
-                        {
-                            recentThreats.map((item) => (
 
-                                <div
-                                    key={item.id}
-                                    className="feed-card"
-                                >
-
-                                    <div className="feed-icon">
-
-                                        <ShieldAlert size={20}/>
-
-                                    </div>
+                    {
+                        recentThreats.map((item)=>(
 
 
-                                    <div className="feed-content">
 
-                                        <div className="feed-top">
+                            <div
 
-                                            <h3>
+                                key={item.id}
 
-                                                {
-                                                    item.attack_type
-                                                }
+                                className="feed-card"
 
-                                            </h3>
-
-                                            <span
-                                                className={`severity-badge ${item.severity?.toLowerCase()}`}
-                                            >
-                                                {
-                                                    item.severity
-                                                }
-                                            </span>
-
-                                        </div>
+                            >
 
 
-                                        <p className="feed-ip">
-
-                                            {
-                                                item.source_ip
-                                            }
-
-                                        </p>
 
 
-                                        <div className="feed-meta">
-
-                                            <span>
-
-                                                <MapPin size={14}/>
-
-                                                {
-
-                                                    item.city && item.country
-
-                                                    ?
-
-                                                    `${item.city}, ${item.country}`
-
-                                                    :
-
-                                                    "Unknown Location"
-
-                                                }
-
-                                            </span>
+                                <div className="feed-icon">
 
 
-                                            <span>
+                                    <ShieldAlert size={20}/>
 
-                                                <Clock3 size={14}/>
-
-                                                {
-
-                                                    item.timestamp || "-"
-
-                                                }
-
-                                            </span>
-
-                                        </div>
-
-                                    </div>
 
                                 </div>
 
-                            ))
-                        }
+
+
+
+
+
+
+                                <div className="feed-content">
+
+
+
+
+
+                                    <div className="feed-top">
+
+
+
+                                        <h3>
+
+                                            {
+                                                item.attack_type ||
+                                                "Unknown Attack"
+                                            }
+
+                                        </h3>
+
+
+
+
+                                        <span
+
+                                            className={
+                                                `severity-badge ${
+                                                    item.severity
+                                                    ?.toLowerCase()
+                                                    || ""
+                                                }`
+                                            }
+
+                                        >
+
+                                            {
+                                                item.severity ||
+                                                "Unknown"
+                                            }
+
+                                        </span>
+
+
+
+                                    </div>
+
+
+
+
+
+
+
+
+
+                                    <p className="feed-ip">
+
+
+                                        {
+                                            item.source_ip ||
+                                            "Unknown IP"
+                                        }
+
+
+                                    </p>
+
+
+
+
+
+
+
+
+
+                                    <div className="feed-meta">
+
+
+
+
+
+                                        <span>
+
+
+                                            <MapPin size={14}/>
+
+
+                                            {
+
+                                                item.city &&
+                                                item.country
+
+                                                ?
+
+                                                `${item.city}, ${item.country}`
+
+                                                :
+
+                                                "Unknown Location"
+
+                                            }
+
+
+                                        </span>
+
+
+
+
+
+
+
+
+                                        <span>
+
+
+                                            <Clock3 size={14}/>
+
+
+                                            {
+
+                                                item.timestamp ||
+
+                                                "-"
+
+                                            }
+
+
+                                        </span>
+
+
+
+
+
+
+                                    </div>
+
+
+
+
+
+
+
+                                </div>
+
+
+
+
+
+
+                            </div>
+
+
+
+                        ))
+                    }
+
+
 
                     </div>
+
 
                 )
 
             }
 
+
+
+
         </div>
+
 
     );
 
 }
+
+
 
 export default RecentThreatFeed;

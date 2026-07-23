@@ -1,9 +1,9 @@
-from flask import Blueprint, jsonify, Response
-from io import StringIO
-import csv
-from collections import defaultdict
-from datetime import datetime
+from flask import Blueprint, jsonify, Response, request
+import json
 
+from sqlalchemy import func, text
+
+from app.database.db import db
 from app.models.detection import Detection
 
 
@@ -14,320 +14,625 @@ analysis_bp = Blueprint(
 )
 
 
+
 def detection_to_dict(detection):
-    """
-    Convert Detection model into API response format.
-    """
 
     return {
+
         "id": detection.id,
+
         "attack_type": detection.attack_type,
+
         "severity": detection.severity,
+
         "source_ip": detection.source_ip,
+
         "is_private_ip": detection.is_private_ip,
+
         "country": detection.country,
+
         "city": detection.city,
+
         "latitude": detection.latitude,
+
         "longitude": detection.longitude,
+
         "timestamp": detection.timestamp,
+
         "matched_pattern": detection.matched_pattern,
+
         "http_method": detection.http_method,
+
         "request_path": detection.request_path,
+
         "status_code": detection.status_code,
+
         "raw_log": detection.raw_log,
-        "created_at": (
-            detection.created_at.isoformat()
-            if detection.created_at
-            else None
-        ),
+
+        "created_at":
+            (
+                detection.created_at.isoformat()
+                if detection.created_at
+                else None
+            ),
+
     }
 
+
+
+
+
+# ==========================================================
+# PAGINATED DETECTIONS
+# ==========================================================
 
 @analysis_bp.route("/detections", methods=["GET"])
 def get_detections():
-    """
-    Return all detected security threats.
-    """
 
-    detections = Detection.query.order_by(
-        Detection.created_at.desc()
-    ).all()
 
-    result = [
-        detection_to_dict(detection)
-        for detection in detections
-    ]
+    page = max(
+        int(request.args.get("page",1)),
+        1
+    )
 
-    return jsonify(result), 200
 
+    limit = min(
+        int(request.args.get("limit",50)),
+        200
+    )
+
+
+
+    pagination = (
+
+        Detection.query
+
+        .order_by(
+            Detection.created_at.desc()
+        )
+
+        .paginate(
+            page=page,
+            per_page=limit,
+            error_out=False
+        )
+
+    )
+
+
+
+    return jsonify({
+
+        "items":
+            [
+                detection_to_dict(d)
+                for d in pagination.items
+            ],
+
+        "page":
+            pagination.page,
+
+        "pages":
+            pagination.pages,
+
+        "total":
+            pagination.total
+
+    }),200
+
+
+
+
+
+
+# ==========================================================
+# SUMMARY
+# ==========================================================
 
 @analysis_bp.route("/summary", methods=["GET"])
 def get_summary():
-    """
-    Return dashboard statistics and threat intelligence.
-    """
 
-    detections = Detection.query.all()
 
-    severity_count = {}
-    attack_count = {}
-    ip_count = {}
-    country_count = {}
-    endpoint_count = {}
 
-    timeline_count = defaultdict(int)
+    attack_types = dict(
 
-    network_type_count = {
-        "private": 0,
-        "public": 0,
-    }
-
-    for detection in detections:
-
-        severity_count[detection.severity] = (
-            severity_count.get(
-                detection.severity,
-                0,
-            )
-            + 1
+        db.session.query(
+            Detection.attack_type,
+            func.count(Detection.id)
         )
 
-        attack_count[detection.attack_type] = (
-            attack_count.get(
-                detection.attack_type,
-                0,
-            )
-            + 1
+        .group_by(
+            Detection.attack_type
         )
 
-        ip_count[detection.source_ip] = (
-            ip_count.get(
-                detection.source_ip,
-                0,
-            )
-            + 1
+        .all()
+
+    )
+
+
+
+    severity = dict(
+
+        db.session.query(
+            Detection.severity,
+            func.count(Detection.id)
         )
 
-        if detection.is_private_ip:
-            network_type_count["private"] += 1
-        else:
-            network_type_count["public"] += 1
+        .group_by(
+            Detection.severity
+        )
 
-        if detection.country:
-            country_count[detection.country] = (
-                country_count.get(
-                    detection.country,
-                    0,
-                )
-                + 1
-            )
+        .all()
 
-        if detection.request_path:
-            endpoint_count[detection.request_path] = (
-                endpoint_count.get(
-                    detection.request_path,
-                    0,
-                )
-                + 1
-            )
+    )
 
-        # ---------------------------------------------------
-        # Attack Timeline (based on log timestamp, NOT created_at)
-        # ---------------------------------------------------
 
-        if detection.timestamp:
 
-            try:
+    countries = dict(
 
-                attack_time = datetime.strptime(
-                    detection.timestamp,
-                    "%d/%b/%Y:%H:%M:%S %z",
-                )
+        db.session.query(
+            Detection.country,
+            func.count(Detection.id)
+        )
 
-                hour = attack_time.strftime("%H:00")
+        .filter(
+            Detection.country.isnot(None)
+        )
 
-                timeline_count[hour] += 1
+        .group_by(
+            Detection.country
+        )
 
-            except ValueError:
-                pass
+        .all()
 
-    # Ensure every hour exists for chart rendering
+    )
+
+
+
+    source_ips = dict(
+
+        db.session.query(
+            Detection.source_ip,
+            func.count(Detection.id)
+        )
+
+        .group_by(
+            Detection.source_ip
+        )
+
+        .order_by(
+            func.count(Detection.id).desc()
+        )
+
+        .limit(10)
+
+        .all()
+
+    )
+
+
+
+
+    # ======================================================
+    # THREAT INTELLIGENCE
+    # ======================================================
+
+
+    most_active_ip = (
+
+        db.session.query(
+
+            Detection.source_ip,
+            func.count(Detection.id)
+
+        )
+
+        .group_by(
+            Detection.source_ip
+        )
+
+        .order_by(
+            func.count(Detection.id).desc()
+        )
+
+        .first()
+
+    )
+
+
+
+
+    most_active_country = (
+
+        db.session.query(
+
+            Detection.country,
+            func.count(Detection.id)
+
+        )
+
+        .filter(
+            Detection.country.isnot(None)
+        )
+
+        .group_by(
+            Detection.country
+        )
+
+        .order_by(
+            func.count(Detection.id).desc()
+        )
+
+        .first()
+
+    )
+
+
+
+
+    top_endpoint = (
+
+        db.session.query(
+
+            Detection.request_path,
+            func.count(Detection.id)
+
+        )
+
+        .filter(
+            Detection.request_path.isnot(None)
+        )
+
+        .group_by(
+            Detection.request_path
+        )
+
+        .order_by(
+            func.count(Detection.id).desc()
+        )
+
+        .first()
+
+    )
+
+
+
+
+
+
+
+    network_rows = (
+
+        db.session.query(
+            Detection.is_private_ip,
+            func.count(Detection.id)
+        )
+
+        .group_by(
+            Detection.is_private_ip
+        )
+
+        .all()
+
+    )
+
+
+    network = dict(network_rows)
+
+
+
+
+
+    total = (
+
+        db.session.query(
+            func.count(Detection.id)
+        )
+
+        .scalar()
+
+    )
+
+
+
+
+
+    latest = (
+
+        Detection.query
+
+        .order_by(
+            Detection.created_at.desc()
+        )
+
+        .first()
+
+    )
+
+
+
+
+
+    highest_risk = (
+
+        Detection.query
+
+        .filter(
+            Detection.severity=="High"
+        )
+
+        .order_by(
+            Detection.created_at.desc()
+        )
+
+        .first()
+
+    )
+
+
+
+
+
+    # ======================================================
+    # TIMELINE
+    # ======================================================
+
+
+    timeline = {}
+
+
+
+    timeline_rows = db.session.execute(
+
+        text(
+
+            """
+            SELECT
+                SUBSTRING(timestamp FROM 13 FOR 2) AS hour,
+                COUNT(id) AS total
+            FROM detections
+            WHERE timestamp IS NOT NULL
+            GROUP BY SUBSTRING(timestamp FROM 13 FOR 2)
+            ORDER BY hour
+            """
+
+        )
+
+    ).fetchall()
+
+
+
+    for row in timeline_rows:
+
+        hour = row.hour.strip()
+
+        timeline[f"{hour}:00"] = row.total
+
+
+
+
 
     for hour in range(24):
 
-        timeline_count.setdefault(
+        timeline.setdefault(
             f"{hour:02}:00",
-            0,
+            0
         )
 
-    most_active_ip = (
-        max(
-            ip_count,
-            key=ip_count.get,
-        )
-        if ip_count
-        else None
-    )
 
-    most_active_country = (
-        max(
-            country_count,
-            key=country_count.get,
-        )
-        if country_count
-        else None
-    )
 
-    top_endpoint = (
-        max(
-            endpoint_count,
-            key=endpoint_count.get,
-        )
-        if endpoint_count
-        else None
-    )
 
-    latest_attack = None
 
-    if detections:
 
-        latest_detection = max(
-            detections,
-            key=lambda d: d.created_at,
-        )
 
-        latest_attack = (
-            latest_detection.created_at.isoformat()
-        )
+    return jsonify({
 
-    severity_rank = {
-        "High": 3,
-        "Medium": 2,
-        "Low": 1,
-    }
 
-    highest_risk_attack = None
+        "total_attacks":
+            total,
 
-    if detections:
 
-        highest = max(
-            detections,
-            key=lambda d: severity_rank.get(
-                d.severity,
-                0,
+        "attack_types":
+            attack_types,
+
+
+        "severity":
+            severity,
+
+
+        "countries":
+            countries,
+
+
+        "source_ips":
+            source_ips,
+
+
+
+        "most_active_ip":
+            (
+                most_active_ip[0]
+                if most_active_ip
+                else None
             ),
-        )
 
-        highest_risk_attack = (
-            highest.attack_type
-        )
 
-    return jsonify(
-        {
-            "total_attacks": len(detections),
-            "attack_types": attack_count,
-            "severity": severity_count,
-            "source_ips": ip_count,
-            "countries": country_count,
-            "network_type": network_type_count,
-            "timeline": dict(
-                sorted(timeline_count.items())
+
+        "most_active_country":
+            (
+                most_active_country[0]
+                if most_active_country
+                else "Unknown"
             ),
-            "most_active_ip": most_active_ip,
-            "most_active_country": most_active_country,
-            "top_endpoint": top_endpoint,
-            "latest_attack": latest_attack,
-            "highest_risk_attack": highest_risk_attack,
-        }
-    ), 200
 
 
-@analysis_bp.route("/export/json", methods=["GET"])
-def export_json():
-    """
-    Export detections as JSON.
-    """
 
-    detections = Detection.query.order_by(
-        Detection.created_at.desc()
-    ).all()
-
-    result = [
-        detection_to_dict(detection)
-        for detection in detections
-    ]
-
-    return Response(
-        jsonify(result).get_data(as_text=True),
-        mimetype="application/json",
-        headers={
-            "Content-Disposition":
-                "attachment; filename=detections.json"
-        },
-    )
+        "top_endpoint":
+            (
+                top_endpoint[0]
+                if top_endpoint
+                else None
+            ),
 
 
-@analysis_bp.route("/export/csv", methods=["GET"])
+
+        "network_type":
+            {
+
+                "private":
+                    network.get(True,0),
+
+                "public":
+                    network.get(False,0)
+
+            },
+
+
+
+        "timeline":
+            dict(
+                sorted(
+                    timeline.items()
+                )
+            ),
+
+
+
+
+        "latest_attack":
+            (
+                latest.created_at.isoformat()
+                if latest
+                else None
+            ),
+
+
+
+
+        "highest_risk_attack":
+            (
+                highest_risk.attack_type
+                if highest_risk
+                else None
+            )
+
+
+    }),200
+
+
+
+
+
+
+
+# ==========================================================
+# CSV EXPORT
+# ==========================================================
+
+@analysis_bp.route("/export/csv")
 def export_csv():
-    """
-    Export detections as CSV.
-    """
 
-    detections = Detection.query.order_by(
-        Detection.created_at.desc()
-    ).all()
 
-    output = StringIO()
+    def generate():
 
-    writer = csv.writer(output)
 
-    writer.writerow(
-        [
-            "ID",
-            "Attack Type",
-            "Severity",
-            "Source IP",
-            "Private IP",
-            "Country",
-            "City",
-            "Latitude",
-            "Longitude",
-            "Timestamp",
-            "HTTP Method",
-            "Request Path",
-            "Status Code",
-            "Matched Pattern",
-            "Raw Log",
-        ]
-    )
-
-    for detection in detections:
-
-        writer.writerow(
-            [
-                detection.id,
-                detection.attack_type,
-                detection.severity,
-                detection.source_ip,
-                detection.is_private_ip,
-                detection.country,
-                detection.city,
-                detection.latitude,
-                detection.longitude,
-                detection.timestamp,
-                detection.http_method,
-                detection.request_path,
-                detection.status_code,
-                detection.matched_pattern,
-                detection.raw_log,
-            ]
+        yield (
+            "ID,Attack Type,Severity,Source IP,"
+            "Country,City,Latitude,Longitude,Timestamp\n"
         )
 
+
+
+        for d in Detection.query.yield_per(1000):
+
+
+            yield (
+
+                f"{d.id},"
+                f"{d.attack_type},"
+                f"{d.severity},"
+                f"{d.source_ip},"
+                f"{d.country},"
+                f"{d.city},"
+                f"{d.latitude},"
+                f"{d.longitude},"
+                f"{d.timestamp}\n"
+
+            )
+
+
+
     return Response(
-        output.getvalue(),
+
+        generate(),
+
         mimetype="text/csv",
+
         headers={
+
             "Content-Disposition":
                 "attachment; filename=detections.csv"
-        },
+
+        }
+
+    )
+
+
+
+
+
+
+
+# ==========================================================
+# JSON EXPORT
+# ==========================================================
+
+@analysis_bp.route("/export/json")
+def export_json():
+
+
+    def generate():
+
+        yield "["
+
+        first=True
+
+
+
+        for d in Detection.query.yield_per(1000):
+
+
+            if not first:
+
+                yield ","
+
+
+
+            yield json.dumps(
+                detection_to_dict(d)
+            )
+
+
+            first=False
+
+
+
+        yield "]"
+
+
+
+
+    return Response(
+
+        generate(),
+
+        mimetype="application/json",
+
+        headers={
+
+            "Content-Disposition":
+                "attachment; filename=detections.json"
+
+        }
+
     )

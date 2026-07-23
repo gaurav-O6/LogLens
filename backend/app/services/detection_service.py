@@ -9,13 +9,13 @@ geoip_service = GeoIPService()
 
 def save_detections(detections: list[dict]) -> list[Detection]:
     """
-    Save a batch of detections.
+    Save detection batch.
 
-    Designed for streaming pipeline batches.
-    Adds GeoIP enrichment before saving.
+    Optimized for streaming processing.
+    Performs GeoIP enrichment and bulk inserts.
 
     Does not commit.
-    Transaction is controlled by the worker.
+    Worker controls transaction.
     """
 
     detection_entries = []
@@ -23,44 +23,11 @@ def save_detections(detections: list[dict]) -> list[Detection]:
 
     for detection in detections:
 
-
         source_ip = (
-
             detection.get("source_ip")
-
             or detection.get("ip")
-
             or ""
-
         )
-
-
-        existing = Detection.query.filter_by(
-
-            source_ip=source_ip,
-
-            attack_type=detection.get(
-                "attack_type",
-                ""
-            ),
-
-            request_path=detection.get(
-                "request_path"
-            ),
-
-            timestamp=detection.get(
-                "timestamp"
-            ),
-
-            matched_pattern=detection.get(
-                "matched_pattern"
-            )
-
-        ).first()
-
-
-        if existing:
-            continue
 
 
         location = geoip_service.lookup(

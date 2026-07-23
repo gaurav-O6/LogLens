@@ -65,6 +65,7 @@ def upload_log():
             "app.workers.log_worker.process_log_job",
             job.id,
             str(file_path),
+            job_timeout=900,
         )
 
         return jsonify(
@@ -130,6 +131,7 @@ def demo_log():
             "app.workers.log_worker.process_log_job",
             job.id,
             str(demo_file),
+            job_timeout=900,
         )
 
         return jsonify(

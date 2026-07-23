@@ -4,55 +4,22 @@ from app.models.log_entry import LogEntry
 
 def save_logs(parsed_logs: list[dict]) -> list[dict]:
     """
-    Save a batch of log entries.
+    Save a batch of parsed log entries.
 
-    Designed for streaming pipeline batches.
-    Does not commit.
+    Every log event is stored.
+    Duplicate requests are valid events in security analysis.
+
     Transaction is controlled by the worker.
     """
 
-    new_logs = []
+    if not parsed_logs:
+        return []
+
+
+    entries = []
+
 
     for log in parsed_logs:
-
-        existing = LogEntry.query.filter_by(
-
-            ip_address=log.get(
-                "ip",
-                ""
-            ),
-
-            timestamp=log.get(
-                "timestamp",
-                ""
-            ),
-
-            method=log.get(
-                "method",
-                ""
-            ),
-
-            path=log.get(
-                "path",
-                ""
-            ),
-
-            status_code=log.get(
-                "status_code",
-                0
-            ),
-
-            user_agent=log.get(
-                "user_agent",
-                ""
-            ),
-
-        ).first()
-
-
-        if existing:
-            continue
-
 
         entry = LogEntry(
 
@@ -89,19 +56,18 @@ def save_logs(parsed_logs: list[dict]) -> list[dict]:
         )
 
 
-        db.session.add(
+        entries.append(
             entry
         )
 
 
-        new_logs.append(
-            log
+    if entries:
+
+        db.session.bulk_save_objects(
+            entries
         )
-
-
-    if new_logs:
 
         db.session.flush()
 
 
-    return new_logs
+    return parsed_logs

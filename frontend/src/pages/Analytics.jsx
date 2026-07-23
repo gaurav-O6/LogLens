@@ -11,73 +11,144 @@ import TopAttackers from "../components/TopAttackers";
 import "./Page.css";
 
 
-function Analytics() {
+
+function Analytics(){
 
 
-    const [summary,setSummary] = useState(null);
+    const [summary,setSummary] = useState({});
 
     const [detections,setDetections] = useState([]);
 
     const [loading,setLoading] = useState(true);
 
+    const [error,setError] = useState(null);
+
+
+
+
+
 
 
     useEffect(()=>{
 
+
         loadAnalytics();
+
 
     },[]);
 
 
 
+
+
+
+
+
+
     const loadAnalytics = async()=>{
+
 
         try{
 
 
+            setError(null);
+
+
+
             const summaryResponse =
+
                 await apiClient.get(
                     "/analysis/summary"
                 );
 
 
+
+
+
             const detectionResponse =
+
                 await apiClient.get(
-                    "/analysis/detections"
+                    "/analysis/detections?limit=100"
                 );
 
 
+
+
+
+
             setSummary(
-                summaryResponse.data
+
+                summaryResponse.data || {}
+
             );
+
+
+
 
 
             setDetections(
-                detectionResponse.data
+
+                detectionResponse.data?.items || []
+
             );
 
 
+
+
+
         }
+
+
+
         catch(error){
 
+
             console.error(
-                "Analytics loading failed",
+
+                "Analytics loading failed:",
+
                 error
+
             );
 
+
+
+            setError(
+
+                "Failed to load analytics data"
+
+            );
+
+
+
         }
+
+
+
+
+
         finally{
+
 
             setLoading(false);
 
+
         }
+
+
 
     };
 
 
 
 
+
+
+
+
+
     if(loading){
+
 
         return (
 
@@ -89,30 +160,78 @@ function Analytics() {
 
         );
 
+
     }
 
 
 
-    return (
+
+
+
+
+
+
+    if(error){
+
+
+        return (
+
+            <div className="dashboard-loading">
+
+                {error}
+
+            </div>
+
+        );
+
+
+    }
+
+
+
+
+
+
+
+
+
+    return(
+
 
         <div className="page analytics-page">
+
+
+
+
+
 
 
             <div className="page-heading">
 
 
+
                 <h1>
+
                     Security Analytics
+
                 </h1>
 
 
+
                 <p>
+
                     Identify attack trends,
                     patterns and threat behaviour
+
                 </p>
 
 
+
             </div>
+
+
+
+
 
 
 
@@ -123,12 +242,16 @@ function Analytics() {
 
                 <AttackMap
 
-                    detections={detections}
+                    detections={
+                        detections
+                    }
 
                 />
 
 
             </section>
+
+
 
 
 
@@ -142,23 +265,37 @@ function Analytics() {
                 <div className="dashboard-grid">
 
 
+
                     <SeverityChart
 
+
                         severity={
-                            summary.severity
+
+                            summary?.severity || {}
+
                         }
 
+
                     />
+
+
+
 
 
 
                     <AttackChart
 
+
                         attacks={
-                            summary.attack_types
+
+                            summary?.attack_types || {}
+
                         }
 
+
                     />
+
+
 
 
                 </div>
@@ -172,19 +309,27 @@ function Analytics() {
 
 
 
+
+
             <section>
 
 
                 <DetectionTimeline
 
+
                     timeline={
-                        summary.timeline
+
+                        summary?.timeline || {}
+
                     }
+
 
                 />
 
 
             </section>
+
+
 
 
 
@@ -197,9 +342,13 @@ function Analytics() {
 
                 <TopAttackers
 
+
                     sourceIps={
-                        summary.source_ips
+
+                        summary?.source_ips || {}
+
                     }
+
 
                 />
 
@@ -208,11 +357,20 @@ function Analytics() {
 
 
 
+
+
+
+
+
         </div>
+
 
     );
 
+
 }
+
+
 
 
 export default Analytics;

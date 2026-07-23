@@ -24,86 +24,58 @@ class ApacheLogParser:
     )
 
 
-
     def parse_line(self, line: str) -> Optional[dict]:
-        """
-        Parse a single Apache log line.
-        """
-
 
         match = self.LOG_PATTERN.match(line)
 
-
         if not match:
-
             return None
-
-
 
         return {
 
-            "ip":
-                match.group("ip"),
+            "ip": match.group("ip"),
 
+            "timestamp": match.group("timestamp"),
 
-            "timestamp":
-                match.group("timestamp"),
+            "method": match.group("method"),
 
+            "path": match.group("path"),
 
-            "method":
-                match.group("method"),
+            "status_code": int(match.group("status_code")),
 
+            "user_agent": match.group("user_agent"),
 
-            "path":
-                match.group("path"),
-
-
-            "status_code":
-                int(match.group("status_code")),
-
-
-            "user_agent":
-                match.group("user_agent"),
-
-
-            "raw_log":
-                line,
+            "raw_log": line,
 
         }
-
-
 
 
     def parse_file(
         self,
         file_path: Path
     ) -> Iterator[dict]:
-        """
-        Stream Apache log file line-by-line.
 
-        Does not store the complete file in RAM.
-        """
-
+        matched = 0
+        skipped = 0
 
         with file_path.open(
             "r",
-            encoding="utf-8"
+            encoding="utf-8",
+            errors="ignore",
         ) as file:
-
 
             for line in file:
 
-
                 raw_line = line.rstrip("\n")
 
+                parsed = self.parse_line(raw_line)
 
+                if parsed is None:
+                    skipped += 1
+                    continue
 
-                parsed = self.parse_line(
-                    raw_line
-                )
+                matched += 1
+                yield parsed
 
-
-
-                if parsed is not None:
-
-                    yield parsed
+        print(f"[PARSER] Matched: {matched:,}")
+        print(f"[PARSER] Skipped: {skipped:,}")

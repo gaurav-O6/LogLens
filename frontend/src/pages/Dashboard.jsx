@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import apiClient from "../api/client";
 
 import SummaryCards from "../components/SummaryCards";
@@ -15,30 +16,36 @@ import ThreatFilterBar from "../components/ThreatFilterBar";
 import "./dashboard.css";
 
 
-function Dashboard() {
+function Dashboard(){
 
 
-    const [summary, setSummary] = useState(null);
+    const [summary,setSummary] = useState(null);
 
-    const [detections, setDetections] = useState([]);
+    const [detections,setDetections] = useState([]);
 
-    const [filteredDetections, setFilteredDetections] = useState([]);
-
-    const [selectedDetection, setSelectedDetection] = useState(null);
-
-    const [loading, setLoading] = useState(true);
+    const [selectedDetection,setSelectedDetection] = useState(null);
 
 
+    const [loading,setLoading] = useState(true);
 
-    const [filters, setFilters] = useState({
 
-        severity: "All",
+    const [page,setPage] = useState(1);
 
-        network: "All",
+    const [pages,setPages] = useState(1);
 
-        attackType: "All",
+    const [total,setTotal] = useState(0);
 
-        search: "",
+
+
+    const [filters,setFilters] = useState({
+
+        severity:"All",
+
+        network:"All",
+
+        attackType:"All",
+
+        search:"",
 
     });
 
@@ -46,63 +53,63 @@ function Dashboard() {
 
 
 
-    useEffect(() => {
-
-        fetchData();
-
-    }, []);
 
 
+    useEffect(()=>{
 
+        fetchSummary();
 
-
-    useEffect(() => {
-
-        applyFilters();
-
-    }, [filters, detections]);
+    },[]);
 
 
 
 
 
+    useEffect(()=>{
 
+        fetchDetections();
 
-    const fetchData = async () => {
-
-
-        try {
-
-
-            const summaryResponse =
-                await apiClient.get("/analysis/summary");
+    },[page]);
 
 
 
-            const detectionResponse =
-                await apiClient.get("/analysis/detections");
 
 
 
-            setSummary(summaryResponse.data);
 
-            setDetections(detectionResponse.data);
+    const fetchSummary = async()=>{
 
+
+        try{
+
+
+            const response =
+                await apiClient.get(
+                    "/analysis/summary"
+                );
+
+
+            setSummary(
+                response.data || {}
+            );
 
 
         }
 
-        catch(error) {
 
-            console.error(error);
+        catch(error){
+
+            console.error(
+                "Summary loading failed:",
+                error
+            );
+
+
+            setSummary({});
+
 
         }
 
-        finally {
-
-            setLoading(false);
-
-        }
 
     };
 
@@ -113,73 +120,39 @@ function Dashboard() {
 
 
 
-    const applyFilters = () => {
+
+    const fetchDetections = async()=>{
 
 
-        let result = [...detections];
+        try{
+
+
+            const response =
+                await apiClient.get(
+                    `/analysis/detections?page=${page}&limit=100`
+                );
 
 
 
-        if(filters.severity !== "All") {
+            setDetections(
 
-
-            result = result.filter(
-
-                item =>
-                    item.severity === filters.severity
+                response.data?.items || []
 
             );
 
-        }
+
+
+            setPages(
+
+                response.data?.pages || 1
+
+            );
 
 
 
+            setTotal(
 
-        if(filters.network !== "All") {
-
-
-            if(filters.network === "Internal") {
-
-
-                result = result.filter(
-
-                    item =>
-                        item.is_private_ip === true
-
-                );
-
-
-            }
-
-
-            else {
-
-
-                result = result.filter(
-
-                    item =>
-                        item.is_private_ip === false
-
-                );
-
-
-            }
-
-        }
-
-
-
-
-
-
-
-        if(filters.attackType !== "All") {
-
-
-            result = result.filter(
-
-                item =>
-                    item.attack_type === filters.attackType
+                response.data?.total || 0
 
             );
 
@@ -188,11 +161,126 @@ function Dashboard() {
 
 
 
+        catch(error){
+
+            console.error(
+                "Detection loading failed:",
+                error
+            );
+
+
+            setDetections([]);
+
+
+        }
+
+
+        finally{
+
+            setLoading(false);
+
+        }
+
+
+    };
 
 
 
 
-        if(filters.search.trim() !== "") {
+
+
+
+
+
+
+
+    const filteredDetections =
+
+    detections.filter(item=>{
+
+
+        if(!item){
+
+            return false;
+
+        }
+
+
+
+        if(
+
+            filters.severity !== "All"
+
+            &&
+
+            item.severity !== filters.severity
+
+        ){
+
+            return false;
+
+        }
+
+
+
+
+
+        if(
+
+            filters.attackType !== "All"
+
+            &&
+
+            item.attack_type !== filters.attackType
+
+        ){
+
+            return false;
+
+        }
+
+
+
+
+
+
+        if(
+
+            filters.network === "Internal"
+
+            &&
+
+            !item.is_private_ip
+
+        ){
+
+            return false;
+
+        }
+
+
+
+
+
+        if(
+
+            filters.network === "External"
+
+            &&
+
+            item.is_private_ip
+
+        ){
+
+            return false;
+
+        }
+
+
+
+
+
+        if(filters.search.trim()){
 
 
             const search =
@@ -200,19 +288,25 @@ function Dashboard() {
 
 
 
-            result = result.filter(
+            return (
 
-                item =>
+                item.source_ip
+                ?.toLowerCase()
+                .includes(search)
 
-                    item.source_ip
-                    ?.toLowerCase()
-                    .includes(search)
 
-                    ||
+                ||
 
-                    item.request_path
-                    ?.toLowerCase()
-                    .includes(search)
+                item.request_path
+                ?.toLowerCase()
+                .includes(search)
+
+
+                ||
+
+                item.attack_type
+                ?.toLowerCase()
+                .includes(search)
 
             );
 
@@ -223,93 +317,26 @@ function Dashboard() {
 
 
 
+        return true;
 
-        setFilteredDetections(result);
 
-
-    };
-
+    });
 
 
 
 
 
 
-    const createFilteredSummary = () => {
-
-
-        const severity = {};
-
-        const attacks = {};
-
-        const ips = {};
 
 
 
-        filteredDetections.forEach(item => {
+    const attackTypes =
 
-
-            severity[item.severity] =
-                (severity[item.severity] || 0) + 1;
-
-
-
-            attacks[item.attack_type] =
-                (attacks[item.attack_type] || 0) + 1;
-
-
-
-            ips[item.source_ip] =
-                (ips[item.source_ip] || 0) + 1;
-
-
-
-        });
-
-
-
-
-        return {
-
-
-            ...summary,
-
-
-            severity,
-
-
-            attack_types: attacks,
-
-
-            source_ips: ips,
-
-
-            total_attacks:
-                filteredDetections.length,
-
-        };
-
-
-    };
-
-
-
-
-
-
-    const exportReport = (format) => {
-
-
-        window.open(
-
-            `http://localhost:5000/api/v1/analysis/export/${format}`,
-
-            "_blank"
-
+        Object.keys(
+            summary?.attack_types || {}
         );
 
 
-    };
 
 
 
@@ -317,7 +344,7 @@ function Dashboard() {
 
 
 
-    if(loading) {
+    if(loading){
 
 
         return (
@@ -337,32 +364,12 @@ function Dashboard() {
 
 
 
-    const attackTypes = [
-
-        ...new Set(
-
-            detections.map(
-                item => item.attack_type
-            )
-
-        )
-
-    ];
-
-
-
-
-
-    const filteredSummary =
-        createFilteredSummary();
-
-
-
 
 
 
 
     return (
+
 
         <div className="dashboard">
 
@@ -370,76 +377,30 @@ function Dashboard() {
 
 
 
-<div className="dashboard-title">
+
+            <div className="dashboard-title">
 
 
-    <div className="dashboard-heading">
+                <h1>
 
+                    SOC Dashboard
 
-        <div className="title-row">
-
-
-            <h1>
-                SOC Dashboard
-            </h1>
-
-
-            <span className="status-badge">
-
-                <span className="status-dot"></span>
-
-                Monitoring Active
-
-            </span>
-
-
-        </div>
+                </h1>
 
 
 
-        <p>
+                <p>
 
-            Security operations overview — monitor threats,
-            analyze attack patterns, and investigate incidents
+                    Security operations overview —
+                    monitor threats,
+                    analyze attack patterns,
+                    and investigate incidents
 
-        </p>
-
-
-    </div>
-
+                </p>
 
 
+            </div>
 
-
-    <div className="export-buttons">
-
-
-        <button
-            className="export-btn"
-            onClick={() => exportReport("csv")}
-        >
-
-            Export CSV
-
-        </button>
-
-
-
-        <button
-            className="export-btn"
-            onClick={() => exportReport("json")}
-        >
-
-            Export JSON
-
-        </button>
-
-
-    </div>
-
-
-
-</div>
 
 
 
@@ -463,16 +424,19 @@ function Dashboard() {
 
 
 
+
+
             {
                 summary &&
 
                 <SummaryCards
 
-                    summary={filteredSummary}
+                    summary={summary}
 
                 />
 
             }
+
 
 
 
@@ -485,7 +449,7 @@ function Dashboard() {
 
                 <ThreatIntelCards
 
-                    summary={filteredSummary}
+                    summary={summary}
 
                 />
 
@@ -498,19 +462,14 @@ function Dashboard() {
 
 
 
-            <section>
+            <AttackMap
 
+                detections={
+                    filteredDetections
+                }
 
-                <AttackMap
+            />
 
-                    detections={
-                        filteredDetections
-                    }
-
-                />
-
-
-            </section>
 
 
 
@@ -520,47 +479,32 @@ function Dashboard() {
 
 
             <section>
-
-
-                <div className="section-header">
-
-
-                    <h2>
-                        Threat Overview
-                    </h2>
-
-
-                    <p>
-                        Attack severity and classification analysis
-                    </p>
-
-
-                </div>
-
-
-
 
 
                 <div className="dashboard-grid">
 
 
+
                     <SeverityChart
 
                         severity={
-                            filteredSummary.severity
+                            summary?.severity || {}
                         }
 
                     />
+
+
 
 
 
                     <AttackChart
 
                         attacks={
-                            filteredSummary.attack_types
+                            summary?.attack_types || {}
                         }
 
                     />
+
 
 
                 </div>
@@ -575,17 +519,30 @@ function Dashboard() {
 
 
 
-            <section>
-
 
             <DetectionTimeline
+
                 timeline={
-                    filteredSummary.timeline
+                    summary?.timeline || {}
                 }
+
             />
 
 
-            </section>
+
+
+
+
+
+
+
+            <TopAttackers
+
+                sourceIps={
+                    summary?.source_ips || {}
+                }
+
+            />
 
 
 
@@ -594,44 +551,23 @@ function Dashboard() {
 
 
 
-            <section>
 
+            <DetectionTable
 
-                <TopAttackers
+                detections={
+                    filteredDetections
+                }
 
-                    sourceIps={
-                        filteredSummary.source_ips
-                    }
+                onSelect={
+                    setSelectedDetection
+                }
 
-                />
+                selected={
+                    selectedDetection
+                }
 
+            />
 
-            </section>
-
-
-
-
-
-
-
-
-            <section>
-
-
-                <DetectionTable
-
-                    detections={
-                        filteredDetections
-                    }
-
-                    onSelect={
-                        setSelectedDetection
-                    }
-
-                />
-
-
-            </section>
 
 
 
@@ -643,16 +579,19 @@ function Dashboard() {
             {
                 selectedDetection &&
 
+
                 <InvestigationPanel
 
                     detection={
                         selectedDetection
                     }
 
-                    onClose={
-                        () =>
-                            setSelectedDetection(null)
-                    }
+
+                    onClose={()=>{
+
+                        setSelectedDetection(null);
+
+                    }}
 
                 />
 
@@ -661,7 +600,10 @@ function Dashboard() {
 
 
 
+
+
         </div>
+
 
     );
 
