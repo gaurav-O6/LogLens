@@ -6,7 +6,10 @@ from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 
-ALLOWED_EXTENSIONS = {".log"}
+
+ALLOWED_EXTENSIONS = {
+    ".log"
+}
 
 
 
@@ -14,13 +17,21 @@ def save_uploaded_log(file: FileStorage) -> str:
     """
     Validate and save uploaded log file safely.
 
-    Uses chunked writing for large log files.
+    Uses streaming chunk upload so large
+    security logs do not load into memory.
     """
 
-    if file.filename is None or file.filename == "":
+
+
+    if (
+        file.filename is None
+        or file.filename == ""
+    ):
+
         raise ValueError(
             "No file selected."
         )
+
 
 
     original_filename = secure_filename(
@@ -28,15 +39,19 @@ def save_uploaded_log(file: FileStorage) -> str:
     )
 
 
+
     extension = Path(
         original_filename
     ).suffix.lower()
 
 
+
     if extension not in ALLOWED_EXTENSIONS:
+
         raise ValueError(
             "Only .log files are allowed."
         )
+
 
 
     filename = (
@@ -46,9 +61,11 @@ def save_uploaded_log(file: FileStorage) -> str:
     )
 
 
+
     upload_folder = Path(
         current_app.config["UPLOAD_FOLDER"]
     )
+
 
 
     upload_folder.mkdir(
@@ -57,13 +74,18 @@ def save_uploaded_log(file: FileStorage) -> str:
     )
 
 
-    save_path = upload_folder / filename
+
+    save_path = (
+        upload_folder /
+        filename
+    )
 
 
 
     print(
-        "[UPLOAD] Saving file:",
-        filename
+        "[UPLOAD] Saving:",
+        filename,
+        flush=True
     )
 
 
@@ -72,7 +94,11 @@ def save_uploaded_log(file: FileStorage) -> str:
 
 
 
-    with open(save_path, "wb") as destination:
+    with open(
+        save_path,
+        "wb"
+    ) as destination:
+
 
 
         while True:
@@ -93,15 +119,22 @@ def save_uploaded_log(file: FileStorage) -> str:
             )
 
 
-            total_bytes += len(chunk)
+            destination.flush()
+
+
+
+            total_bytes += len(
+                chunk
+            )
 
 
 
     print(
-        "[UPLOAD] Saved:",
+        "[UPLOAD] Completed:",
         filename,
         total_bytes,
-        "bytes"
+        "bytes",
+        flush=True
     )
 
 
