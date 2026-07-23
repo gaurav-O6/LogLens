@@ -7,7 +7,6 @@ from flask import (
     current_app,
 )
 
-from rq.exceptions import RedisError
 
 from app.database.db import db
 from app.models.job import Job
