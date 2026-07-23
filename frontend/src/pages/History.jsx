@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+
 import {
     Database,
     CheckCircle,
     Clock3,
     RefreshCw,
+    FileText,
 } from "lucide-react";
 
 import api from "../api/client";
@@ -12,77 +14,191 @@ import "./Page.css";
 
 function History() {
 
+
     const [jobs, setJobs] = useState([]);
 
     const [loading, setLoading] = useState(true);
 
     const [error, setError] = useState("");
 
+    const [refreshing, setRefreshing] = useState(false);
+
+
+    const jobsRef = useRef([]);
+
+
+
+
 
     useEffect(() => {
 
+
         loadJobs();
+
+
+        const interval = setInterval(() => {
+
+
+            const activeJobs =
+                jobsRef.current.some(
+                    job =>
+                        job.status === "queued" ||
+                        job.status === "processing"
+                );
+
+
+            if(activeJobs){
+
+                loadJobs(false);
+
+            }
+
+
+        },5000);
+
+
+
+        return () => {
+
+            clearInterval(interval);
+
+        };
+
 
     }, []);
 
 
-    async function loadJobs() {
+
+
+
+
+
+    async function loadJobs(showLoading=true){
+
 
         try {
 
-            setLoading(true);
+
+            if(showLoading){
+
+                setLoading(true);
+
+            }
+            else{
+
+                setRefreshing(true);
+
+            }
+
+
 
             setError("");
 
-            const response = await api.get("/jobs");
 
-            setJobs(response.data);
+
+            const response =
+                await api.get("/jobs");
+
+
+
+            const data =
+                Array.isArray(response.data)
+                ?
+                response.data
+                :
+                [];
+
+
+
+            jobsRef.current = data;
+
+
+            setJobs(data);
+
+
 
         }
-        catch (error) {
 
-            console.error(error);
 
-            setError("Failed to load job history.");
+        catch(error){
+
+
+            console.error(
+                "HISTORY ERROR",
+                error
+            );
+
+
+            setError(
+                "Failed to load job history."
+            );
+
 
         }
-        finally {
+
+
+        finally{
+
 
             setLoading(false);
 
+            setRefreshing(false);
+
+
         }
+
 
     }
 
 
-    const formatDate = (date) => {
 
-        if (!date) {
+
+
+
+
+    const formatDate = (date)=>{
+
+
+        if(!date){
 
             return "-";
 
         }
 
-        return new Date(date).toLocaleString();
+
+        return new Date(date)
+            .toLocaleString();
+
 
     };
 
 
-    const statusClass = (status) => {
 
-        switch (status?.toLowerCase()) {
+
+
+
+
+    const statusClass=(status)=>{
+
+
+        switch(status?.toLowerCase()){
+
 
             case "completed":
                 return "status-completed";
 
+
             case "processing":
                 return "status-processing";
+
 
             case "queued":
                 return "status-queued";
 
+
             case "failed":
                 return "status-failed";
+
 
             default:
                 return "";
@@ -92,22 +208,29 @@ function History() {
     };
 
 
+
+
+
+
+
     const completedJobs =
         jobs.filter(
-            job => job.status?.toLowerCase() === "completed"
+            job =>
+            job.status === "completed"
         ).length;
 
 
-    const queuedJobs =
+
+    const activeJobs =
         jobs.filter(
-            job => job.status?.toLowerCase() === "queued"
+            job =>
+            job.status === "queued" ||
+            job.status === "processing"
         ).length;
 
 
-    const processingJobs =
-        jobs.filter(
-            job => job.status?.toLowerCase() === "processing"
-        ).length;
+
+
 
 
 
@@ -130,12 +253,16 @@ function History() {
 
 
 
+
+
+
+
             <div className="history-summary">
 
 
                 <div className="stat-card">
 
-                    <Database size={24} />
+                    <Database size={24}/>
 
                     <div>
 
@@ -153,9 +280,11 @@ function History() {
 
 
 
+
+
                 <div className="stat-card">
 
-                    <CheckCircle size={24} />
+                    <CheckCircle size={24}/>
 
                     <div>
 
@@ -173,9 +302,13 @@ function History() {
 
 
 
+
+
                 <div className="stat-card">
 
-                    <Clock3 size={24} />
+
+                    <Clock3 size={24}/>
+
 
                     <div>
 
@@ -184,12 +317,14 @@ function History() {
                         </h3>
 
                         <p>
-                            {processingJobs + queuedJobs}
+                            {activeJobs}
                         </p>
 
                     </div>
 
+
                 </div>
+
 
 
             </div>
@@ -197,8 +332,12 @@ function History() {
 
 
 
-            <div className="history-table-card">
 
+
+
+
+
+            <div className="history-table-card">
 
 
                 <div className="history-header">
@@ -218,7 +357,9 @@ function History() {
                                 Uploaded log processing jobs
                             </p>
 
+
                         </div>
+
 
 
 
@@ -226,22 +367,34 @@ function History() {
 
                             className="history-refresh-btn"
 
-                            onClick={loadJobs}
+                            onClick={() => loadJobs()}
 
-                            title="Refresh job history"
-
-                            disabled={loading}
+                            disabled={
+                                loading ||
+                                refreshing
+                            }
 
                         >
 
                             <RefreshCw
+
                                 size={17}
-                                className={loading ? "spin" : ""}
+
+                                className={
+                                    refreshing
+                                    ?
+                                    "spin"
+                                    :
+                                    ""
+                                }
+
                             />
 
                             Refresh
 
+
                         </button>
+
 
 
                     </div>
@@ -253,44 +406,48 @@ function History() {
 
 
 
+
+
+
+
                 {
                     loading ?
 
 
-                        <div className="empty-state">
+                    <div className="empty-state">
 
-                            Loading history...
+                        Loading history...
 
-                        </div>
+                    </div>
+
+
+
+                    : error ?
+
+
+
+                    <div className="empty-state">
+
+                        {error}
+
+                    </div>
+
+
+
+                    : jobs.length===0 ?
+
+
+
+                    <div className="empty-state">
+
+                        No processing jobs found.
+
+                    </div>
+
 
 
                     :
 
-
-                    error ?
-
-
-                        <div className="empty-state">
-
-                            {error}
-
-                        </div>
-
-
-                    :
-
-
-                    jobs.length === 0 ?
-
-
-                        <div className="empty-state">
-
-                            No processing jobs found.
-
-                        </div>
-
-
-                    :
 
 
                     <div className="history-table-container">
@@ -305,7 +462,7 @@ function History() {
 
                                     <th>ID</th>
 
-                                    <th>Filename</th>
+                                    <th>File</th>
 
                                     <th>Status</th>
 
@@ -317,72 +474,106 @@ function History() {
 
                                     <th>Completed</th>
 
+
                                 </tr>
 
+
                             </thead>
+
+
 
 
 
                             <tbody>
 
 
-                                {
-                                    jobs.map(job => (
+                            {
+                                jobs.map(job=>(
 
 
-                                        <tr key={job.id}>
+                                    <tr key={job.id}>
 
 
-                                            <td>
-                                                {job.id}
-                                            </td>
+                                        <td>
+                                            #{job.id}
+                                        </td>
 
 
-                                            <td>
-                                                {job.filename}
-                                            </td>
+
+                                        <td>
+
+                                            <FileText size={16}/>
+
+                                            {job.filename}
+
+                                        </td>
 
 
-                                            <td>
 
 
-                                                <span
-                                                    className={`status-badge ${statusClass(job.status)}`}
-                                                >
+                                        <td>
 
-                                                    {job.status}
+                                            <span
 
-                                                </span>
+                                                className={
+                                                    `status-badge ${statusClass(job.status)}`
+                                                }
 
+                                            >
 
-                                            </td>
+                                                {job.status}
 
-
-                                            <td>
-                                                {job.progress ?? 0}%
-                                            </td>
+                                            </span>
 
 
-                                            <td>
-                                                {formatDate(job.created_at)}
-                                            </td>
+                                        </td>
 
 
-                                            <td>
-                                                {formatDate(job.started_at)}
-                                            </td>
 
 
-                                            <td>
-                                                {formatDate(job.completed_at)}
-                                            </td>
+                                        <td>
+
+                                            {job.progress ?? 0}%
+
+                                        </td>
 
 
-                                        </tr>
+
+                                        <td>
+
+                                            {formatDate(
+                                                job.created_at
+                                            )}
+
+                                        </td>
 
 
-                                    ))
-                                }
+
+                                        <td>
+
+                                            {formatDate(
+                                                job.started_at
+                                            )}
+
+                                        </td>
+
+
+
+                                        <td>
+
+                                            {formatDate(
+                                                job.completed_at
+                                            )}
+
+                                        </td>
+
+
+
+                                    </tr>
+
+
+                                ))
+                            }
 
 
                             </tbody>
@@ -393,13 +584,16 @@ function History() {
 
                     </div>
 
+
                 }
+
 
 
             </div>
 
 
         </div>
+
 
     );
 
