@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+
 import {
     UploadCloud,
     CheckCircle,
@@ -7,228 +8,488 @@ import {
 
 import api from "../api/client";
 
+
 function UploadBox({ onComplete }) {
 
     const [file, setFile] = useState(null);
+
     const [loading, setLoading] = useState(false);
+
     const [result, setResult] = useState(null);
+
     const [error, setError] = useState("");
+
     const [status, setStatus] = useState("");
 
-    const pollJobStatus = async (jobId) => {
+    const intervalRef = useRef(null);
 
-        const interval = setInterval(async () => {
+
+
+    const stopPolling = () => {
+
+        if (intervalRef.current) {
+
+            clearInterval(intervalRef.current);
+
+            intervalRef.current = null;
+
+        }
+
+    };
+
+
+
+    const pollJobStatus = (jobId) => {
+
+
+        stopPolling();
+
+
+        intervalRef.current = setInterval(async () => {
+
 
             try {
 
-                const response = await api.get(`/jobs/${jobId}`);
+
+                const response = await api.get(
+                    `/jobs/${jobId}`
+                );
+
 
                 const job = response.data;
 
-                setStatus(`Status: ${job.status}`);
 
-                if (job.status === "completed") {
+                console.log(
+                    "JOB STATUS:",
+                    job
+                );
 
-                    clearInterval(interval);
+
+                setStatus(
+                    `Status: ${job.status} (${job.progress || 0}%)`
+                );
+
+
+
+                if(job.status === "completed") {
+
+
+                    stopPolling();
+
 
                     setResult({
+
                         filename: job.filename,
+
                         status: job.status,
+
                     });
 
+
                     setLoading(false);
 
-                    if (onComplete) {
+
+
+                    if(onComplete){
+
                         onComplete();
+
                     }
+
                 }
 
-                if (job.status === "failed") {
 
-                    clearInterval(interval);
+
+                if(job.status === "failed") {
+
+
+                    stopPolling();
+
 
                     setLoading(false);
 
-                    setError(job.error || "Processing failed.");
+
+                    setError(
+                        job.error ||
+                        "Processing failed."
+                    );
+
                 }
+
+
 
             }
-            catch (err) {
 
-                console.error(err);
+            catch(error){
 
-                clearInterval(interval);
+
+                console.error(
+                    "JOB POLLING ERROR",
+                    error
+                );
+
+
+                stopPolling();
+
 
                 setLoading(false);
 
-                setError("Failed checking job status.");
+
+                setError(
+                    "Unable to check job status."
+                );
+
+
             }
 
-        }, 2000);
+
+        },3000);
 
     };
 
-    const startProcessing = async (endpoint, options = {}) => {
+
+
+
+
+    const startProcessing = async (
+        endpoint,
+        options={}
+    ) => {
+
 
         try {
 
+
             setLoading(true);
+
             setError("");
-            setResult(null);
-            setStatus("Uploading...");
+
+            setResult("");
+
+            setStatus(
+                "Starting processing..."
+            );
+
+
 
             const response = await api.request({
-                url: endpoint,
-                method: options.method || "POST",
-                data: options.data,
-                headers: options.headers,
+
+                url:endpoint,
+
+                method:options.method || "POST",
+
+                data:options.data,
+
+                headers:options.headers,
+
             });
 
-            console.log("UPLOAD RESPONSE:", response.data);
 
-            const jobId = response.data.job_id;
 
-            setStatus("Job created. Processing...");
+            console.log(
+                "UPLOAD RESPONSE:",
+                response.data
+            );
+
+
+
+            const jobId =
+                response.data.job_id;
+
+
+
+            if(!jobId){
+
+                throw new Error(
+                    "No job id returned"
+                );
+
+            }
+
+
+
+            setStatus(
+                "Job queued..."
+            );
+
+
 
             pollJobStatus(jobId);
 
-        }
-        catch (err) {
 
-            console.error("UPLOAD ERROR:", err);
+
+        }
+
+        catch(error){
+
+
+            console.error(
+                "UPLOAD ERROR:",
+                error
+            );
+
 
             setLoading(false);
 
-            if (err.response) {
 
-                console.error(err.response.data);
-
-                setError(JSON.stringify(err.response.data));
-
-            }
-            else {
-
-                setError(err.message);
-
-            }
+            setError(
+                error.response?.data?.error ||
+                error.message
+            );
 
         }
 
     };
 
+
+
+
+
+
     const handleUpload = () => {
 
-        if (!file) {
 
-            setError("Please select a .log file");
+        if(!file){
+
+            setError(
+                "Please select a .log file"
+            );
+
             return;
 
         }
 
-        const formData = new FormData();
 
-        formData.append("file", file);
 
-        startProcessing("/logs/upload", {
-            method: "POST",
-            data: formData,
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
+        const formData =
+            new FormData();
+
+
+
+        formData.append(
+            "file",
+            file
+        );
+
+
+
+        startProcessing(
+            "/logs/upload",
+            {
+
+                method:"POST",
+
+                data:formData,
+
+                headers:{
+
+                    "Content-Type":
+                    "multipart/form-data",
+
+                },
+
+            }
+
+        );
+
 
     };
+
+
+
+
+
 
     const handleDemoLoad = () => {
 
-        startProcessing("/logs/demo", {
-            method: "GET",
-        });
+
+        startProcessing(
+            "/logs/demo",
+            {
+
+                method:"GET",
+
+            }
+
+        );
+
 
     };
+
+
+
+
 
     return (
 
         <div className="upload-box">
 
-            <UploadCloud size={48} />
 
-            <h2>Upload Security Logs</h2>
+            <UploadCloud size={48}/>
 
-            <p>Supports Apache / Nginx .log files</p>
+
+            <h2>
+                Upload Security Logs
+            </h2>
+
+
+            <p>
+                Supports Apache / Nginx .log files
+            </p>
+
+
 
             <label className="file-drop">
 
+
                 <input
+
                     type="file"
+
                     accept=".log"
-                    onChange={(e) => setFile(e.target.files[0])}
+
+                    onChange={
+                        e =>
+                        setFile(
+                            e.target.files[0]
+                        )
+                    }
+
                 />
 
+
                 <span>
-                    {file ? file.name : "Choose log file"}
+
+                    {
+                        file ?
+                        file.name :
+                        "Choose log file"
+                    }
+
                 </span>
+
 
             </label>
 
+
+
+
             <button
+
                 onClick={handleUpload}
+
                 disabled={loading}
+
             >
-                {loading ? "Processing..." : "Upload & Analyze"}
+
+                {
+                    loading ?
+                    "Processing..." :
+                    "Upload & Analyze"
+                }
+
             </button>
+
+
 
             <button
+
                 onClick={handleDemoLoad}
+
                 disabled={loading}
+
             >
-                {loading ? "Processing..." : "Load Demo Log"}
+
+                {
+                    loading ?
+                    "Processing..." :
+                    "Load Demo Log"
+                }
+
             </button>
 
-            {status && (
-                <p>{status}</p>
-            )}
 
-            {result && (
+
+
+            {
+                status &&
+
+                <p>
+                    {status}
+                </p>
+
+            }
+
+
+
+
+            {
+                result &&
 
                 <div className="upload-result success">
 
-                    <CheckCircle size={20} />
+
+                    <CheckCircle size={20}/>
+
 
                     <div>
 
-                        <strong>Analysis Complete</strong>
+
+                        <strong>
+                            Analysis Complete
+                        </strong>
+
 
                         <p>
                             File: {result.filename}
                         </p>
 
-                        <button onClick={onComplete}>
+
+
+                        <button
+                            onClick={onComplete}
+                        >
+
                             View Dashboard
+
                         </button>
+
 
                     </div>
 
+
                 </div>
 
-            )}
+            }
 
-            {error && (
+
+
+
+            {
+                error &&
 
                 <div className="upload-result error">
 
-                    <AlertCircle size={20} />
 
-                    <span>{error}</span>
+                    <AlertCircle size={20}/>
+
+
+                    <span>
+                        {error}
+                    </span>
+
 
                 </div>
 
-            )}
+            }
+
+
 
         </div>
 
     );
 
 }
+
 
 export default UploadBox;
