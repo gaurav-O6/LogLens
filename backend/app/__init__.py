@@ -17,6 +17,7 @@ from app.api.health import health_bp
 from app.api.upload import upload_bp
 from app.api.analysis import analysis_bp
 from app.api.jobs import jobs_bp
+from app.api.admin import admin_bp
 
 from app.config import Config
 
@@ -51,6 +52,7 @@ def create_app() -> Flask:
 
 
     # Register blueprints
+
     app.register_blueprint(
         health_bp
     )
@@ -65,6 +67,10 @@ def create_app() -> Flask:
 
     app.register_blueprint(
         jobs_bp
+    )
+
+    app.register_blueprint(
+        admin_bp
     )
 
 
