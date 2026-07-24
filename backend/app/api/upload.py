@@ -4,12 +4,12 @@ from flask import (
     Blueprint,
     jsonify,
     request,
+    current_app,
 )
 
 from app.database.db import db
 from app.models.job import Job
 from app.services.upload_service import save_uploaded_log
-from app.services.r2_service import r2_service
 from app.queue.redis_queue import queue
 
 
@@ -20,13 +20,20 @@ upload_bp = Blueprint(
 )
 
 
-
-def enqueue_processing(job_id, filename):
+def enqueue_processing(
+    job_id,
+    file_reference
+):
     """
-    Add processing job to RQ queue.
+    Add processing task to Redis queue.
 
-    filename:
-        R2 object key
+    file_reference:
+
+    Uploaded logs:
+        filename stored in R2
+
+    Demo logs:
+        local file path
     """
 
     try:
@@ -34,9 +41,10 @@ def enqueue_processing(job_id, filename):
         rq_job = queue.enqueue(
             "app.workers.log_worker.process_log_job",
             job_id,
-            filename,
-            job_timeout=900,
+            file_reference,
+            job_timeout=3600,
         )
+
 
         return rq_job
 
@@ -50,15 +58,28 @@ def enqueue_processing(job_id, filename):
 
 
 
-
 @upload_bp.route(
     "/upload",
     methods=["POST"]
 )
 def upload_log():
     """
-    Upload log file and queue processing.
+    Upload log file.
+
+    Flow:
+
+    Client
+        |
+        v
+    Temporary disk
+        |
+        v
+    Cloudflare R2
+        |
+        v
+    Redis worker
     """
+
 
     print(
         "[UPLOAD REQUEST RECEIVED]",
@@ -66,7 +87,9 @@ def upload_log():
     )
 
 
+
     if "file" not in request.files:
+
 
         return jsonify(
             {
@@ -76,11 +99,13 @@ def upload_log():
 
 
 
+
     file = request.files["file"]
 
 
 
     if file.filename == "":
+
 
         return jsonify(
             {
@@ -90,14 +115,11 @@ def upload_log():
 
 
 
+
     try:
 
 
-        #
-        # Save temporary file,
-        # upload to R2,
-        # remove local copy
-        #
+
         filename = save_uploaded_log(
             file
         )
@@ -105,27 +127,35 @@ def upload_log():
 
 
         job = Job(
+
             filename=filename,
+
             status="queued",
+
             progress=0,
+
         )
+
 
 
         db.session.add(
             job
         )
 
+
         db.session.commit()
 
 
 
-        #
-        # Worker downloads from R2
-        #
+
         enqueue_processing(
+
             job.id,
+
             filename,
+
         )
+
 
 
 
@@ -138,19 +168,35 @@ def upload_log():
 
 
 
+
         return jsonify(
+
             {
-                "message": "Log processing started.",
-                "job_id": job.id,
-                "status": job.status,
-                "filename": filename,
+
+                "message":
+                    "Log processing started.",
+
+
+                "job_id":
+                    job.id,
+
+
+                "status":
+                    job.status,
+
+
+                "filename":
+                    filename,
+
             }
+
         ), 202
 
 
 
 
     except Exception as error:
+
 
 
         db.session.rollback()
@@ -166,12 +212,19 @@ def upload_log():
 
 
         return jsonify(
-            {
-                "error": "Upload failed.",
-                "details": str(error),
-            }
-        ), 500
 
+            {
+
+                "error":
+                    "Upload failed.",
+
+
+                "details":
+                    str(error),
+
+            }
+
+        ), 500
 
 
 
@@ -183,29 +236,28 @@ def upload_log():
     methods=["GET"]
 )
 def demo_log():
+
     """
-    Upload demo log to R2
-    and queue processing.
+    Process built-in demo attack log.
+
+    Demo file stays inside repository.
+    It is NOT uploaded to R2.
     """
+
 
     try:
 
 
-        #
-        # backend/
-        # ├── app/
-        # │   └── api/
-        # │       └── upload.py
-        # |
-        # └── sample_logs/
-        #     └── attack_test.log
-        #
         demo_file = (
-            Path(__file__)
-            .resolve()
-            .parents[2]
+
+            Path(current_app.root_path)
+
+            .parent
+
             / "sample_logs"
+
             / "attack_test.log"
+
         )
 
 
@@ -214,41 +266,32 @@ def demo_log():
 
 
             return jsonify(
+
                 {
-                    "error": "Demo log file not found.",
-                    "searched_path": str(demo_file),
+
+                    "error":
+                        "Demo log file not found.",
+
+
+                    "searched_path":
+                        str(demo_file),
+
                 }
+
             ), 404
 
 
 
 
 
-        object_name = (
-            "demo_attack_test.log"
-        )
-
-
-
-        print(
-            "[DEMO] Uploading demo file to R2:",
-            object_name,
-            flush=True
-        )
-
-
-
-        r2_service.upload_file(
-            demo_file,
-            object_name,
-        )
-
-
-
         job = Job(
-            filename=object_name,
+
+            filename="attack_test.log",
+
             status="queued",
+
             progress=0,
+
         )
 
 
@@ -257,38 +300,45 @@ def demo_log():
             job
         )
 
+
         db.session.commit()
 
 
 
 
         enqueue_processing(
+
             job.id,
-            object_name,
-        )
 
+            str(demo_file),
 
-
-
-        print(
-            "[DEMO QUEUED]",
-            object_name,
-            job.id,
-            flush=True
         )
 
 
 
 
         return jsonify(
-            {
-                "message": "Demo processing started.",
-                "job_id": job.id,
-                "status": job.status,
-                "filename": object_name,
-            }
-        ), 202
 
+            {
+
+                "message":
+                    "Demo processing started.",
+
+
+                "job_id":
+                    job.id,
+
+
+                "status":
+                    job.status,
+
+
+                "filename":
+                    "attack_test.log",
+
+            }
+
+        ), 202
 
 
 
@@ -300,17 +350,17 @@ def demo_log():
 
 
 
-        print(
-            "[DEMO FAILED]",
-            error,
-            flush=True
-        )
-
-
-
         return jsonify(
+
             {
-                "error": "Demo processing failed.",
-                "details": str(error),
+
+                "error":
+                    "Demo processing failed.",
+
+
+                "details":
+                    str(error),
+
             }
+
         ), 500

@@ -15,6 +15,7 @@ class Config:
         "dev-secret-key",
     )
 
+
     DEBUG = (
         os.getenv(
             "FLASK_DEBUG",
@@ -22,6 +23,7 @@ class Config:
         ).lower()
         == "true"
     )
+
 
     # ==========================================================
     # Database
@@ -32,7 +34,10 @@ class Config:
         "postgresql+psycopg://loglens:loglens@postgres:5432/loglens",
     )
 
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+
 
     # ==========================================================
     # Redis
@@ -43,9 +48,13 @@ class Config:
         "redis://redis:6379/0",
     )
 
+
+
     # ==========================================================
     # Local Upload Cache
-    # (temporary before uploading to R2)
+    #
+    # Temporary storage only.
+    # Files are uploaded to R2 and removed.
     # ==========================================================
 
     UPLOAD_FOLDER = os.getenv(
@@ -53,11 +62,25 @@ class Config:
         "uploads",
     )
 
+
+    #
+    # Maximum uploaded log size:
+    #
+    # 700 MB
+    #
+    # Protects against:
+    # - accidental huge uploads
+    # - storage abuse
+    # - memory/disk pressure
+    #
     MAX_CONTENT_LENGTH = (
-        2 * 1024 * 1024 * 1024
+        700 * 1024 * 1024
     )
 
+
     SEND_FILE_MAX_AGE_DEFAULT = 0
+
+
 
     # ==========================================================
     # Cloudflare R2
@@ -67,17 +90,21 @@ class Config:
         "R2_ACCOUNT_ID"
     )
 
+
     R2_BUCKET_NAME = os.getenv(
         "R2_BUCKET_NAME"
     )
+
 
     R2_ENDPOINT = os.getenv(
         "R2_ENDPOINT"
     )
 
+
     R2_ACCESS_KEY_ID = os.getenv(
         "R2_ACCESS_KEY_ID"
     )
+
 
     R2_SECRET_ACCESS_KEY = os.getenv(
         "R2_SECRET_ACCESS_KEY"

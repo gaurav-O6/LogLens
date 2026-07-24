@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 import traceback
 
+
 from app.database.db import db
 from app.models.job import Job
 
@@ -10,20 +11,26 @@ from app.services.r2_service import r2_service
 
 
 
-def download_uploaded_file(filename: str) -> Path:
+
+def download_uploaded_file(
+    filename: str
+) -> Path:
     """
-    Download uploaded log from Cloudflare R2
-    to temporary worker storage.
+    Download uploaded log from R2
+    into worker temporary storage.
     """
+
 
     temp_dir = Path(
         "/tmp/loglens"
     )
 
+
     temp_dir.mkdir(
         parents=True,
-        exist_ok=True,
+        exist_ok=True
     )
+
 
 
     local_path = (
@@ -32,24 +39,28 @@ def download_uploaded_file(filename: str) -> Path:
     )
 
 
+
     print(
         "[WORKER] Downloading from R2:",
         filename,
-        flush=True,
+        flush=True
     )
+
 
 
     r2_service.download_file(
         filename,
-        local_path,
+        local_path
     )
+
 
 
     print(
         "[WORKER] Download complete:",
         local_path,
-        flush=True,
+        flush=True
     )
+
 
 
     return local_path
@@ -58,25 +69,16 @@ def download_uploaded_file(filename: str) -> Path:
 
 
 
-def resolve_log_file(file_reference: str) -> tuple[Path, bool]:
+
+
+def resolve_log_file(
+    file_reference: str
+):
     """
-    Resolve the actual log file.
+    Decide whether file is:
 
-    Returns:
-
-    Path:
-        File location
-
-    bool:
-        Whether file should be deleted after processing
-
-
-    Uploaded logs:
-        filename -> download from R2
-
-
-    Demo logs:
-        local path -> use directly
+    1. Demo local file
+    2. Uploaded R2 object
     """
 
 
@@ -85,15 +87,16 @@ def resolve_log_file(file_reference: str) -> tuple[Path, bool]:
     )
 
 
+
     #
     # Demo file
     #
     if possible_path.exists():
 
         print(
-            "[WORKER] Using local file:",
+            "[WORKER] Using local demo file:",
             possible_path,
-            flush=True,
+            flush=True
         )
 
 
@@ -101,8 +104,9 @@ def resolve_log_file(file_reference: str) -> tuple[Path, bool]:
 
 
 
+
     #
-    # Uploaded file
+    # Uploaded file from R2
     #
     local_file = download_uploaded_file(
         file_reference
@@ -115,17 +119,19 @@ def resolve_log_file(file_reference: str) -> tuple[Path, bool]:
 
 
 
+
+
 def process_log_job(
     job_id: int,
-    file_reference: str,
+    file_reference: str
 ):
     """
-    Background RQ worker task.
+    Background RQ worker.
 
     Handles:
 
-    - R2 uploaded logs
-    - local demo logs
+    - Uploaded logs from R2
+    - Demo logs from repository
     """
 
 
@@ -135,21 +141,27 @@ def process_log_job(
     app = create_app()
 
 
+
     with app.app_context():
 
 
         local_file = None
 
-        cleanup_required = False
+        cleanup_temp_file = False
+
+        r2_object = False
+
 
 
         try:
 
 
+
             print(
                 f"[WORKER] Starting job {job_id}",
-                flush=True,
+                flush=True
             )
+
 
 
 
@@ -164,11 +176,13 @@ def process_log_job(
 
                 print(
                     "[WORKER] Job not found",
-                    flush=True,
+                    flush=True
                 )
 
 
                 return
+
+
 
 
 
@@ -184,21 +198,39 @@ def process_log_job(
 
 
 
-            local_file, cleanup_required = resolve_log_file(
+
+
+            local_file, cleanup_temp_file = resolve_log_file(
                 file_reference
             )
+
+
+
+            #
+            # If it is not a local path,
+            # it came from R2
+            #
+            if cleanup_temp_file:
+
+                r2_object = True
+
+
+
 
 
 
             print(
                 "[WORKER] Processing:",
                 local_file,
-                flush=True,
+                flush=True
             )
 
 
 
+
+
             processor = ProcessingService()
+
 
 
             result = processor.process_file(
@@ -207,10 +239,11 @@ def process_log_job(
 
 
 
+
+
             job = Job.query.get(
                 job_id
             )
-
 
 
             job.status = "completed"
@@ -223,23 +256,73 @@ def process_log_job(
 
             db.session.commit()
 
+
+
+
+
+
+            #
+            # Remove processed upload
+            # from Cloudflare R2
+            #
+            if r2_object:
+
+
+                try:
+
+
+                    r2_service.delete_file(
+                        file_reference
+                    )
+
+
+
+                    print(
+                        "[WORKER] Deleted processed R2 object:",
+                        file_reference,
+                        flush=True
+                    )
+
+
+
+                except Exception as cleanup_error:
+
+
+                    print(
+                        "[WORKER] R2 deletion failed:",
+                        cleanup_error,
+                        flush=True
+                    )
+
+
+
+
+
+
             print(
                 f"[WORKER] Completed job {job_id}",
-                flush=True,
+                flush=True
             )
+
 
 
             return result
 
 
 
+
+
+
+
         except Exception as error:
+
 
 
             print(
                 "[WORKER] FAILED",
-                flush=True,
+                flush=True
             )
+
 
 
             traceback.print_exc()
@@ -275,21 +358,29 @@ def process_log_job(
 
 
 
+
+
         finally:
 
 
 
             #
-            # Remove temporary R2 download
+            # Remove temporary worker file
             #
             if (
-                cleanup_required
+
+                cleanup_temp_file
+
                 and local_file
+
                 and local_file.exists()
+
             ):
 
 
+
                 try:
+
 
 
                     local_file.unlink()
@@ -297,9 +388,9 @@ def process_log_job(
 
 
                     print(
-                        "[WORKER] Temporary file removed:",
+                        "[WORKER] Removed temporary file:",
                         local_file,
-                        flush=True,
+                        flush=True
                     )
 
 
@@ -308,9 +399,9 @@ def process_log_job(
 
 
                     print(
-                        "[WORKER] Cleanup failed:",
+                        "[WORKER] Temp cleanup failed:",
                         cleanup_error,
-                        flush=True,
+                        flush=True
                     )
 
 
