@@ -20,6 +20,7 @@ upload_bp = Blueprint(
 )
 
 
+
 def enqueue_processing(job_id, filename):
     """
     Add processing job to RQ queue.
@@ -48,6 +49,8 @@ def enqueue_processing(job_id, filename):
 
 
 
+
+
 @upload_bp.route(
     "/upload",
     methods=["POST"]
@@ -72,7 +75,9 @@ def upload_log():
         ), 400
 
 
+
     file = request.files["file"]
+
 
 
     if file.filename == "":
@@ -84,11 +89,19 @@ def upload_log():
         ), 400
 
 
+
     try:
 
+
+        #
+        # Save temporary file,
+        # upload to R2,
+        # remove local copy
+        #
         filename = save_uploaded_log(
             file
         )
+
 
 
         job = Job(
@@ -106,10 +119,14 @@ def upload_log():
 
 
 
+        #
+        # Worker downloads from R2
+        #
         enqueue_processing(
             job.id,
             filename,
         )
+
 
 
         print(
@@ -118,6 +135,7 @@ def upload_log():
             job.id,
             flush=True
         )
+
 
 
         return jsonify(
@@ -131,9 +149,12 @@ def upload_log():
 
 
 
+
     except Exception as error:
 
+
         db.session.rollback()
+
 
 
         print(
@@ -143,12 +164,15 @@ def upload_log():
         )
 
 
+
         return jsonify(
             {
                 "error": "Upload failed.",
                 "details": str(error),
             }
         ), 500
+
+
 
 
 
@@ -166,16 +190,28 @@ def demo_log():
 
     try:
 
+
+        #
+        # backend/
+        # ├── app/
+        # │   └── api/
+        # │       └── upload.py
+        # |
+        # └── sample_logs/
+        #     └── attack_test.log
+        #
         demo_file = (
             Path(__file__)
             .resolve()
-            .parents[3]
+            .parents[2]
             / "sample_logs"
             / "attack_test.log"
         )
 
 
+
         if not demo_file.exists():
+
 
             return jsonify(
                 {
@@ -186,15 +222,20 @@ def demo_log():
 
 
 
+
+
         object_name = (
             "demo_attack_test.log"
         )
 
 
+
         print(
-            "[DEMO] Uploading demo log to R2",
+            "[DEMO] Uploading demo file to R2:",
+            object_name,
             flush=True
         )
+
 
 
         r2_service.upload_file(
@@ -211,11 +252,13 @@ def demo_log():
         )
 
 
+
         db.session.add(
             job
         )
 
         db.session.commit()
+
 
 
 
@@ -225,12 +268,15 @@ def demo_log():
         )
 
 
+
+
         print(
             "[DEMO QUEUED]",
             object_name,
             job.id,
             flush=True
         )
+
 
 
 
@@ -245,10 +291,13 @@ def demo_log():
 
 
 
+
+
     except Exception as error:
 
 
         db.session.rollback()
+
 
 
         print(
@@ -256,6 +305,7 @@ def demo_log():
             error,
             flush=True
         )
+
 
 
         return jsonify(
