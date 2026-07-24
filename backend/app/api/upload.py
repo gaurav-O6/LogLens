@@ -5,7 +5,6 @@ from flask import (
     jsonify,
     request,
     current_app,
-    send_file,
 )
 
 from app.database.db import db
@@ -21,9 +20,13 @@ upload_bp = Blueprint(
 )
 
 
-def enqueue_processing(job_id, filename):
+def enqueue_processing(job_id, file_reference):
     """
     Add processing job to RQ queue.
+    
+    file_reference:
+        - uploaded logs -> filename stored in R2
+        - demo logs -> local file path
     """
 
     try:
@@ -31,7 +34,7 @@ def enqueue_processing(job_id, filename):
         rq_job = queue.enqueue(
             "app.workers.log_worker.process_log_job",
             job_id,
-            filename,
+            file_reference,
             job_timeout=900,
         )
 
@@ -44,7 +47,10 @@ def enqueue_processing(job_id, filename):
         )
 
 
-@upload_bp.route("/upload", methods=["POST"])
+@upload_bp.route(
+    "/upload",
+    methods=["POST"]
+)
 def upload_log():
     """
     Upload log file and queue processing.
@@ -55,6 +61,7 @@ def upload_log():
         flush=True
     )
 
+
     if "file" not in request.files:
 
         return jsonify(
@@ -63,7 +70,9 @@ def upload_log():
             }
         ), 400
 
+
     file = request.files["file"]
+
 
     if file.filename == "":
 
@@ -73,11 +82,16 @@ def upload_log():
             }
         ), 400
 
+
     try:
 
+        #
+        # Upload file to R2
+        #
         filename = save_uploaded_log(
             file
         )
+
 
         job = Job(
             filename=filename,
@@ -85,16 +99,23 @@ def upload_log():
             progress=0,
         )
 
+
         db.session.add(
             job
         )
 
         db.session.commit()
 
+
+
+        #
+        # Worker downloads from R2
+        #
         enqueue_processing(
             job.id,
-            filename
+            filename,
         )
+
 
         print(
             "[UPLOAD QUEUED]",
@@ -102,6 +123,7 @@ def upload_log():
             job.id,
             flush=True
         )
+
 
         return jsonify(
             {
@@ -112,15 +134,20 @@ def upload_log():
             }
         ), 202
 
+
+
     except Exception as error:
 
+
         db.session.rollback()
+
 
         print(
             "[UPLOAD FAILED]",
             error,
             flush=True
         )
+
 
         return jsonify(
             {
@@ -130,50 +157,21 @@ def upload_log():
         ), 500
 
 
+
+
 @upload_bp.route(
-    "/file/<filename>",
+    "/demo",
     methods=["GET"]
 )
-def download_uploaded_file(filename):
-    """
-    Temporary endpoint.
-
-    Will be removed after worker
-    migration is complete.
-    """
-
-    upload_folder = Path(
-        current_app.config["UPLOAD_FOLDER"]
-    )
-
-    file_path = (
-        upload_folder /
-        filename
-    )
-
-    if not file_path.exists():
-
-        return jsonify(
-            {
-                "error": "File not found.",
-                "filename": filename,
-            }
-        ), 404
-
-    return send_file(
-        file_path,
-        as_attachment=True,
-        download_name=filename
-    )
-
-
-@upload_bp.route("/demo", methods=["GET"])
 def demo_log():
     """
     Queue demo attack log processing.
+    
+    Demo logs stay inside the repository.
     """
 
     try:
+
 
         demo_file = (
             Path(current_app.root_path)
@@ -181,6 +179,7 @@ def demo_log():
             / "sample_logs"
             / "attack_test.log"
         )
+
 
         if not demo_file.exists():
 
@@ -191,11 +190,14 @@ def demo_log():
                 }
             ), 404
 
+
+
         job = Job(
             filename="attack_test.log",
             status="queued",
             progress=0,
         )
+
 
         db.session.add(
             job
@@ -203,10 +205,17 @@ def demo_log():
 
         db.session.commit()
 
+
+
+        #
+        # Worker detects this as local file
+        #
         enqueue_processing(
             job.id,
-            str(demo_file)
+            str(demo_file),
         )
+
+
 
         return jsonify(
             {
@@ -217,9 +226,13 @@ def demo_log():
             }
         ), 202
 
+
+
     except Exception as error:
 
+
         db.session.rollback()
+
 
         return jsonify(
             {
