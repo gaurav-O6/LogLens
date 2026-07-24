@@ -6,6 +6,7 @@ class Config:
     Base configuration for LogLens.
     """
 
+
     # ==========================================================
     # Flask
     # ==========================================================
@@ -23,6 +24,7 @@ class Config:
         ).lower()
         == "true"
     )
+
 
 
     # ==========================================================
@@ -51,10 +53,7 @@ class Config:
 
 
     # ==========================================================
-    # Local Upload Cache
-    #
-    # Temporary storage only.
-    # Files are uploaded to R2 and removed.
+    # Upload Settings
     # ==========================================================
 
     UPLOAD_FOLDER = os.getenv(
@@ -64,14 +63,14 @@ class Config:
 
 
     #
-    # Maximum uploaded log size:
+    # Maximum upload size:
     #
     # 700 MB
     #
-    # Protects against:
-    # - accidental huge uploads
-    # - storage abuse
-    # - memory/disk pressure
+    # Reason:
+    # - Supports 500-600MB logs
+    # - Prevents abuse
+    # - Protects R2 storage
     #
     MAX_CONTENT_LENGTH = (
         700 * 1024 * 1024

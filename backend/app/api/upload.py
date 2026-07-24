@@ -13,11 +13,17 @@ from app.services.upload_service import save_uploaded_log
 from app.queue.redis_queue import queue
 
 
+
 upload_bp = Blueprint(
     "upload",
     __name__,
     url_prefix="/api/v1/logs",
 )
+
+
+
+MAX_ACTIVE_JOBS = 3
+
 
 
 def enqueue_processing(
@@ -26,14 +32,6 @@ def enqueue_processing(
 ):
     """
     Add processing task to Redis queue.
-
-    file_reference:
-
-    Uploaded logs:
-        filename stored in R2
-
-    Demo logs:
-        local file path
     """
 
     try:
@@ -44,7 +42,6 @@ def enqueue_processing(
             file_reference,
             job_timeout=3600,
         )
-
 
         return rq_job
 
@@ -58,28 +55,30 @@ def enqueue_processing(
 
 
 
+
+def check_active_jobs():
+
+    count = Job.query.filter(
+        Job.status.in_(
+            [
+                "queued",
+                "processing"
+            ]
+        )
+    ).count()
+
+
+    return count
+
+
+
+
+
 @upload_bp.route(
     "/upload",
     methods=["POST"]
 )
 def upload_log():
-    """
-    Upload log file.
-
-    Flow:
-
-    Client
-        |
-        v
-    Temporary disk
-        |
-        v
-    Cloudflare R2
-        |
-        v
-    Redis worker
-    """
-
 
     print(
         "[UPLOAD REQUEST RECEIVED]",
@@ -87,16 +86,25 @@ def upload_log():
     )
 
 
-
-    if "file" not in request.files:
-
+    if check_active_jobs() >= MAX_ACTIVE_JOBS:
 
         return jsonify(
             {
-                "error": "No file provided."
+                "error":
+                "Too many active processing jobs. Please try again later."
+            }
+        ), 429
+
+
+
+    if "file" not in request.files:
+
+        return jsonify(
+            {
+                "error":
+                "No file provided."
             }
         ), 400
-
 
 
 
@@ -106,10 +114,10 @@ def upload_log():
 
     if file.filename == "":
 
-
         return jsonify(
             {
-                "error": "No file selected."
+                "error":
+                "No file selected."
             }
         ), 400
 
@@ -119,7 +127,6 @@ def upload_log():
     try:
 
 
-
         filename = save_uploaded_log(
             file
         )
@@ -127,21 +134,14 @@ def upload_log():
 
 
         job = Job(
-
             filename=filename,
-
             status="queued",
-
             progress=0,
-
         )
 
 
 
-        db.session.add(
-            job
-        )
-
+        db.session.add(job)
 
         db.session.commit()
 
@@ -149,11 +149,8 @@ def upload_log():
 
 
         enqueue_processing(
-
             job.id,
-
             filename,
-
         )
 
 
@@ -168,35 +165,29 @@ def upload_log():
 
 
 
-
         return jsonify(
-
             {
-
                 "message":
-                    "Log processing started.",
+                "Log processing started.",
 
 
                 "job_id":
-                    job.id,
+                job.id,
 
 
                 "status":
-                    job.status,
+                job.status,
 
 
                 "filename":
-                    filename,
-
+                filename,
             }
-
         ), 202
 
 
 
 
     except Exception as error:
-
 
 
         db.session.rollback()
@@ -212,20 +203,15 @@ def upload_log():
 
 
         return jsonify(
-
             {
-
                 "error":
-                    "Upload failed.",
+                "Upload failed.",
 
 
                 "details":
-                    str(error),
-
+                str(error),
             }
-
         ), 500
-
 
 
 
@@ -239,45 +225,31 @@ def demo_log():
 
     """
     Process built-in demo attack log.
-
-    Demo file stays inside repository.
-    It is NOT uploaded to R2.
     """
-
 
     try:
 
 
         demo_file = (
-
             Path(current_app.root_path)
-
             .parent
-
             / "sample_logs"
-
             / "attack_test.log"
-
         )
 
 
 
         if not demo_file.exists():
 
-
             return jsonify(
-
                 {
-
                     "error":
-                        "Demo log file not found.",
+                    "Demo log file not found.",
 
 
                     "searched_path":
-                        str(demo_file),
-
+                    str(demo_file),
                 }
-
             ), 404
 
 
@@ -285,21 +257,14 @@ def demo_log():
 
 
         job = Job(
-
             filename="attack_test.log",
-
             status="queued",
-
             progress=0,
-
         )
 
 
 
-        db.session.add(
-            job
-        )
-
+        db.session.add(job)
 
         db.session.commit()
 
@@ -307,37 +272,29 @@ def demo_log():
 
 
         enqueue_processing(
-
             job.id,
-
             str(demo_file),
-
         )
 
 
 
-
         return jsonify(
-
             {
-
                 "message":
-                    "Demo processing started.",
+                "Demo processing started.",
 
 
                 "job_id":
-                    job.id,
+                job.id,
 
 
                 "status":
-                    job.status,
+                job.status,
 
 
                 "filename":
-                    "attack_test.log",
-
+                "attack_test.log",
             }
-
         ), 202
 
 
@@ -351,16 +308,31 @@ def demo_log():
 
 
         return jsonify(
-
             {
-
                 "error":
-                    "Demo processing failed.",
+                "Demo processing failed.",
 
 
                 "details":
-                    str(error),
-
+                str(error),
             }
-
         ), 500
+
+
+
+
+
+
+@upload_bp.errorhandler(413)
+def file_too_large(error):
+
+    return jsonify(
+        {
+            "error":
+            "File too large.",
+
+
+            "limit":
+            "700MB"
+        }
+    ), 413
