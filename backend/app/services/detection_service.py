@@ -13,15 +13,17 @@ def save_detections(
 ) -> int:
     """
     Bulk insert detections.
-
-    Optimized for streaming processing.
     """
 
+
     if not detections:
+
         return 0
 
 
+
     rows = []
+
 
 
     for detection in detections:
@@ -34,14 +36,22 @@ def save_detections(
         )
 
 
+
         location = geoip_service.lookup(
             source_ip
         )
 
 
+
         rows.append(
 
             {
+
+                "job_id":
+                    detection.get(
+                        "job_id"
+                    ),
+
 
                 "attack_type":
                     detection.get(
@@ -130,6 +140,7 @@ def save_detections(
             }
 
         )
+
 
 
     db.session.bulk_insert_mappings(

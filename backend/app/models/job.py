@@ -11,15 +11,18 @@ class Job(db.Model):
 
     __tablename__ = "jobs"
 
+
     id = db.Column(
         db.Integer,
         primary_key=True,
     )
 
+
     filename = db.Column(
         db.String(255),
         nullable=False,
     )
+
 
     status = db.Column(
         db.String(20),
@@ -28,16 +31,19 @@ class Job(db.Model):
         index=True,
     )
 
+
     progress = db.Column(
         db.Integer,
         nullable=False,
         default=0,
     )
 
+
     error_message = db.Column(
         db.Text,
         nullable=True,
     )
+
 
     created_at = db.Column(
         db.DateTime,
@@ -45,12 +51,21 @@ class Job(db.Model):
         nullable=False,
     )
 
+
     started_at = db.Column(
         db.DateTime,
         nullable=True,
     )
 
+
     completed_at = db.Column(
         db.DateTime,
         nullable=True,
+    )
+
+
+    detections = db.relationship(
+        "Detection",
+        backref="job",
+        lazy=True
     )
