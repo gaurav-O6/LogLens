@@ -27,17 +27,22 @@ function UploadBox({ onComplete }) {
 
 
 
+
     const stopPolling = () => {
 
-        if (intervalRef.current) {
+        if(intervalRef.current){
 
-            clearInterval(intervalRef.current);
+            clearInterval(
+                intervalRef.current
+            );
 
             intervalRef.current = null;
 
         }
 
     };
+
+
 
 
 
@@ -55,10 +60,12 @@ function UploadBox({ onComplete }) {
 
 
 
-    const checkJobStatus = async (jobId) => {
 
 
-        try {
+    const checkJobStatus = async(jobId)=>{
+
+
+        try{
 
 
             const response =
@@ -71,10 +78,12 @@ function UploadBox({ onComplete }) {
                 response.data;
 
 
+
             console.log(
                 "JOB STATUS:",
                 job
             );
+
 
 
             setStatus(
@@ -83,7 +92,9 @@ function UploadBox({ onComplete }) {
 
 
 
-            if(job.status === "completed") {
+
+
+            if(job.status === "completed"){
 
 
                 stopPolling();
@@ -98,6 +109,7 @@ function UploadBox({ onComplete }) {
                         job.status,
 
                 });
+
 
 
                 setLoading(false);
@@ -119,7 +131,8 @@ function UploadBox({ onComplete }) {
 
 
 
-            if(job.status === "failed") {
+
+            if(job.status === "failed"){
 
 
                 stopPolling();
@@ -128,10 +141,12 @@ function UploadBox({ onComplete }) {
                 setLoading(false);
 
 
+
                 setError(
                     job.error ||
                     "Processing failed."
                 );
+
 
 
                 return true;
@@ -139,7 +154,9 @@ function UploadBox({ onComplete }) {
             }
 
 
+
             return false;
+
 
 
         }
@@ -169,6 +186,7 @@ function UploadBox({ onComplete }) {
 
         }
 
+
     };
 
 
@@ -177,13 +195,14 @@ function UploadBox({ onComplete }) {
 
 
 
-    const pollJobStatus = async (jobId) => {
+
+
+    const pollJobStatus = async(jobId)=>{
 
 
         stopPolling();
 
 
-        // immediate check
 
         const finished =
             await checkJobStatus(jobId);
@@ -199,9 +218,11 @@ function UploadBox({ onComplete }) {
 
 
 
+
+
         intervalRef.current =
             setInterval(
-                async () => {
+                async()=>{
 
 
                     const done =
@@ -220,6 +241,7 @@ function UploadBox({ onComplete }) {
                 3000
             );
 
+
     };
 
 
@@ -229,13 +251,14 @@ function UploadBox({ onComplete }) {
 
 
 
-    const startProcessing = async (
+
+    const startProcessing = async(
         endpoint,
         options={}
-    ) => {
+    )=>{
 
 
-        try {
+        try{
 
 
             setLoading(true);
@@ -244,9 +267,12 @@ function UploadBox({ onComplete }) {
 
             setResult(null);
 
+
             setStatus(
                 "Starting processing..."
             );
+
+
 
 
 
@@ -259,13 +285,18 @@ function UploadBox({ onComplete }) {
                         options.method ||
                         "POST",
 
+
                     data:
                         options.data,
+
 
                     headers:
                         options.headers,
 
                 });
+
+
+
 
 
 
@@ -276,8 +307,12 @@ function UploadBox({ onComplete }) {
 
 
 
+
+
             const jobId =
                 response.data.job_id;
+
+
 
 
 
@@ -291,12 +326,16 @@ function UploadBox({ onComplete }) {
 
 
 
+
             setStatus(
                 "Job queued..."
             );
 
 
-            pollJobStatus(jobId);
+
+            pollJobStatus(
+                jobId
+            );
 
 
 
@@ -312,12 +351,19 @@ function UploadBox({ onComplete }) {
             );
 
 
+
             setLoading(false);
 
 
+
             setError(
+
                 error.response?.data?.error ||
-                error.message
+
+                error.message ||
+
+                "Upload failed."
+
             );
 
 
@@ -333,14 +379,17 @@ function UploadBox({ onComplete }) {
 
 
 
-    const handleUpload = () => {
+
+    const handleUpload = ()=>{
 
 
         if(!file){
 
+
             setError(
                 "Please select a .log file"
             );
+
 
             return;
 
@@ -348,8 +397,22 @@ function UploadBox({ onComplete }) {
 
 
 
+
+
+        console.log(
+            "FILE SELECTED:",
+            file.name,
+            file.size,
+            "bytes"
+        );
+
+
+
+
+
         const formData =
             new FormData();
+
 
 
 
@@ -360,21 +423,27 @@ function UploadBox({ onComplete }) {
 
 
 
+
+
+
         startProcessing(
+
             "/logs/upload",
+
             {
 
                 method:"POST",
 
                 data:formData,
 
-                headers:{
-                    "Content-Type":
-                        "multipart/form-data",
-                },
+                // IMPORTANT:
+                // DO NOT SET CONTENT TYPE
+                // Browser adds multipart boundary automatically
 
             }
+
         );
+
 
     };
 
@@ -384,17 +453,27 @@ function UploadBox({ onComplete }) {
 
 
 
-    const handleDemoLoad = () => {
+
+
+    const handleDemoLoad = ()=>{
 
 
         startProcessing(
+
             "/logs/demo",
+
             {
+
                 method:"GET",
+
             }
+
         );
 
+
     };
+
+
 
 
 
@@ -410,14 +489,20 @@ function UploadBox({ onComplete }) {
             <UploadCloud size={48}/>
 
 
+
             <h2>
                 Upload Security Logs
             </h2>
 
 
+
+
             <p>
                 Supports Apache / Nginx .log files
             </p>
+
+
+
 
 
 
@@ -431,13 +516,20 @@ function UploadBox({ onComplete }) {
                     accept=".log"
 
                     onChange={
-                        (e)=>
+                        (e)=>{
+
                             setFile(
                                 e.target.files[0]
-                            )
+                            );
+
+                            setError("");
+
+                        }
+
                     }
 
                 />
+
 
 
                 <span>
@@ -451,15 +543,23 @@ function UploadBox({ onComplete }) {
                 </span>
 
 
+
             </label>
 
 
 
 
+
+
+
             <button
+
                 onClick={handleUpload}
+
                 disabled={loading}
+
             >
+
 
                 {
                     loading
@@ -467,16 +567,24 @@ function UploadBox({ onComplete }) {
                     : "Upload & Analyze"
                 }
 
+
+
             </button>
 
 
 
 
 
+
+
             <button
+
                 onClick={handleDemoLoad}
+
                 disabled={loading}
+
             >
+
 
                 {
                     loading
@@ -484,7 +592,12 @@ function UploadBox({ onComplete }) {
                     : "Load Demo Log"
                 }
 
+
+
             </button>
+
+
+
 
 
 
@@ -505,19 +618,28 @@ function UploadBox({ onComplete }) {
 
 
 
+
+
+
             {
                 result &&
 
+
                 <div className="upload-result success">
+
 
                     <CheckCircle size={20}/>
 
 
+
                     <div>
+
 
                         <strong>
                             Analysis Complete
                         </strong>
+
+
 
 
                         <p>
@@ -525,19 +647,31 @@ function UploadBox({ onComplete }) {
                         </p>
 
 
+
+
+
                         <button
+
                             onClick={onComplete}
+
                         >
+
                             View Dashboard
+
                         </button>
+
 
 
                     </div>
 
 
+
                 </div>
 
+
             }
+
+
 
 
 
@@ -548,17 +682,24 @@ function UploadBox({ onComplete }) {
             {
                 error &&
 
+
                 <div className="upload-result error">
+
 
                     <AlertCircle size={20}/>
 
 
+
                     <span>
+
                         {error}
+
                     </span>
 
 
+
                 </div>
+
 
             }
 
@@ -569,6 +710,7 @@ function UploadBox({ onComplete }) {
     );
 
 }
+
 
 
 export default UploadBox;
