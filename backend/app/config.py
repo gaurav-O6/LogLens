@@ -6,24 +6,22 @@ class Config:
     Base configuration for LogLens.
     """
 
-
-
     # ==========================================================
     # Flask
     # ==========================================================
 
     SECRET_KEY = os.getenv(
         "SECRET_KEY",
-        "dev-secret-key"
+        "dev-secret-key",
     )
 
-
-    DEBUG = os.getenv(
-        "FLASK_DEBUG",
-        "False"
-    ).lower() == "true"
-
-
+    DEBUG = (
+        os.getenv(
+            "FLASK_DEBUG",
+            "False",
+        ).lower()
+        == "true"
+    )
 
     # ==========================================================
     # Database
@@ -31,13 +29,10 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
-        "postgresql+psycopg://loglens:loglens@postgres:5432/loglens"
+        "postgresql+psycopg://loglens:loglens@postgres:5432/loglens",
     )
 
-
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-
 
     # ==========================================================
     # Redis
@@ -45,26 +40,45 @@ class Config:
 
     REDIS_URL = os.getenv(
         "REDIS_URL",
-        "redis://redis:6379/0"
+        "redis://redis:6379/0",
     )
 
-
-
     # ==========================================================
-    # Uploads
+    # Local Upload Cache
+    # (temporary before uploading to R2)
     # ==========================================================
 
     UPLOAD_FOLDER = os.getenv(
         "UPLOAD_FOLDER",
-        "uploads"
+        "uploads",
     )
 
-
-    # Allow large security log files
     MAX_CONTENT_LENGTH = (
         2 * 1024 * 1024 * 1024
     )
 
-
-    # Disable unnecessary caching
     SEND_FILE_MAX_AGE_DEFAULT = 0
+
+    # ==========================================================
+    # Cloudflare R2
+    # ==========================================================
+
+    R2_ACCOUNT_ID = os.getenv(
+        "R2_ACCOUNT_ID"
+    )
+
+    R2_BUCKET_NAME = os.getenv(
+        "R2_BUCKET_NAME"
+    )
+
+    R2_ENDPOINT = os.getenv(
+        "R2_ENDPOINT"
+    )
+
+    R2_ACCESS_KEY_ID = os.getenv(
+        "R2_ACCESS_KEY_ID"
+    )
+
+    R2_SECRET_ACCESS_KEY = os.getenv(
+        "R2_SECRET_ACCESS_KEY"
+    )

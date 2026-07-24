@@ -5,6 +5,7 @@ from flask import (
     jsonify,
     request,
     current_app,
+    send_file,
 )
 
 from app.database.db import db
@@ -20,8 +21,7 @@ upload_bp = Blueprint(
 )
 
 
-
-def enqueue_processing(job_id, file_path):
+def enqueue_processing(job_id, filename):
     """
     Add processing job to RQ queue.
     """
@@ -31,12 +31,11 @@ def enqueue_processing(job_id, file_path):
         rq_job = queue.enqueue(
             "app.workers.log_worker.process_log_job",
             job_id,
-            str(file_path),
+            filename,
             job_timeout=900,
         )
 
         return rq_job
-
 
     except Exception as error:
 
@@ -45,14 +44,16 @@ def enqueue_processing(job_id, file_path):
         )
 
 
-
-
-
 @upload_bp.route("/upload", methods=["POST"])
 def upload_log():
     """
     Upload log file and queue processing.
     """
+
+    print(
+        "[UPLOAD REQUEST RECEIVED]",
+        flush=True
+    )
 
     if "file" not in request.files:
 
@@ -62,11 +63,7 @@ def upload_log():
             }
         ), 400
 
-
-
     file = request.files["file"]
-
-
 
     if file.filename == "":
 
@@ -76,23 +73,11 @@ def upload_log():
             }
         ), 400
 
-
-
     try:
 
-
-        filename = save_uploaded_log(file)
-
-
-
-        upload_folder = Path(
-            current_app.config["UPLOAD_FOLDER"]
+        filename = save_uploaded_log(
+            file
         )
-
-
-        file_path = upload_folder / filename
-
-
 
         job = Job(
             filename=filename,
@@ -100,19 +85,23 @@ def upload_log():
             progress=0,
         )
 
-
-        db.session.add(job)
+        db.session.add(
+            job
+        )
 
         db.session.commit()
 
-
-
         enqueue_processing(
             job.id,
-            file_path
+            filename
         )
 
-
+        print(
+            "[UPLOAD QUEUED]",
+            filename,
+            job.id,
+            flush=True
+        )
 
         return jsonify(
             {
@@ -123,14 +112,15 @@ def upload_log():
             }
         ), 202
 
-
-
     except Exception as error:
-
 
         db.session.rollback()
 
-
+        print(
+            "[UPLOAD FAILED]",
+            error,
+            flush=True
+        )
 
         return jsonify(
             {
@@ -140,9 +130,41 @@ def upload_log():
         ), 500
 
 
+@upload_bp.route(
+    "/file/<filename>",
+    methods=["GET"]
+)
+def download_uploaded_file(filename):
+    """
+    Temporary endpoint.
 
+    Will be removed after worker
+    migration is complete.
+    """
 
+    upload_folder = Path(
+        current_app.config["UPLOAD_FOLDER"]
+    )
 
+    file_path = (
+        upload_folder /
+        filename
+    )
+
+    if not file_path.exists():
+
+        return jsonify(
+            {
+                "error": "File not found.",
+                "filename": filename,
+            }
+        ), 404
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=filename
+    )
 
 
 @upload_bp.route("/demo", methods=["GET"])
@@ -153,15 +175,12 @@ def demo_log():
 
     try:
 
-
         demo_file = (
             Path(current_app.root_path)
             .parent
             / "sample_logs"
             / "attack_test.log"
         )
-
-
 
         if not demo_file.exists():
 
@@ -172,31 +191,22 @@ def demo_log():
                 }
             ), 404
 
-
-
-
         job = Job(
             filename="attack_test.log",
             status="queued",
             progress=0,
         )
 
-
-
-        db.session.add(job)
+        db.session.add(
+            job
+        )
 
         db.session.commit()
 
-
-
-
         enqueue_processing(
             job.id,
-            demo_file
+            str(demo_file)
         )
-
-
-
 
         return jsonify(
             {
@@ -207,15 +217,9 @@ def demo_log():
             }
         ), 202
 
-
-
-
     except Exception as error:
 
-
         db.session.rollback()
-
-
 
         return jsonify(
             {
