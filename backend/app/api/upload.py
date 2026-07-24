@@ -4,12 +4,12 @@ from flask import (
     Blueprint,
     jsonify,
     request,
-    current_app,
 )
 
 from app.database.db import db
 from app.models.job import Job
 from app.services.upload_service import save_uploaded_log
+from app.services.r2_service import r2_service
 from app.queue.redis_queue import queue
 
 
@@ -20,13 +20,12 @@ upload_bp = Blueprint(
 )
 
 
-def enqueue_processing(job_id, file_reference):
+def enqueue_processing(job_id, filename):
     """
     Add processing job to RQ queue.
-    
-    file_reference:
-        - uploaded logs -> filename stored in R2
-        - demo logs -> local file path
+
+    filename:
+        R2 object key
     """
 
     try:
@@ -34,17 +33,19 @@ def enqueue_processing(job_id, file_reference):
         rq_job = queue.enqueue(
             "app.workers.log_worker.process_log_job",
             job_id,
-            file_reference,
+            filename,
             job_timeout=900,
         )
 
         return rq_job
+
 
     except Exception as error:
 
         raise RuntimeError(
             f"Redis queue unavailable: {error}"
         )
+
 
 
 @upload_bp.route(
@@ -85,9 +86,6 @@ def upload_log():
 
     try:
 
-        #
-        # Upload file to R2
-        #
         filename = save_uploaded_log(
             file
         )
@@ -108,9 +106,6 @@ def upload_log():
 
 
 
-        #
-        # Worker downloads from R2
-        #
         enqueue_processing(
             job.id,
             filename,
@@ -138,7 +133,6 @@ def upload_log():
 
     except Exception as error:
 
-
         db.session.rollback()
 
 
@@ -159,23 +153,23 @@ def upload_log():
 
 
 
+
 @upload_bp.route(
     "/demo",
     methods=["GET"]
 )
 def demo_log():
     """
-    Queue demo attack log processing.
-    
-    Demo logs stay inside the repository.
+    Upload demo log to R2
+    and queue processing.
     """
 
     try:
 
-
         demo_file = (
-            Path(current_app.root_path)
-            .parent
+            Path(__file__)
+            .resolve()
+            .parents[3]
             / "sample_logs"
             / "attack_test.log"
         )
@@ -192,8 +186,26 @@ def demo_log():
 
 
 
+        object_name = (
+            "demo_attack_test.log"
+        )
+
+
+        print(
+            "[DEMO] Uploading demo log to R2",
+            flush=True
+        )
+
+
+        r2_service.upload_file(
+            demo_file,
+            object_name,
+        )
+
+
+
         job = Job(
-            filename="attack_test.log",
+            filename=object_name,
             status="queued",
             progress=0,
         )
@@ -207,12 +219,17 @@ def demo_log():
 
 
 
-        #
-        # Worker detects this as local file
-        #
         enqueue_processing(
             job.id,
-            str(demo_file),
+            object_name,
+        )
+
+
+        print(
+            "[DEMO QUEUED]",
+            object_name,
+            job.id,
+            flush=True
         )
 
 
@@ -222,7 +239,7 @@ def demo_log():
                 "message": "Demo processing started.",
                 "job_id": job.id,
                 "status": job.status,
-                "filename": "attack_test.log",
+                "filename": object_name,
             }
         ), 202
 
@@ -232,6 +249,13 @@ def demo_log():
 
 
         db.session.rollback()
+
+
+        print(
+            "[DEMO FAILED]",
+            error,
+            flush=True
+        )
 
 
         return jsonify(
