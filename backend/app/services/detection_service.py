@@ -7,21 +7,25 @@ from app.services.geoip_service import GeoIPService
 geoip_service = GeoIPService()
 
 
-def save_detections(detections: list[dict]) -> list[Detection]:
+
+def save_detections(
+    detections: list[dict]
+) -> int:
     """
-    Save detection batch.
+    Bulk insert detections.
 
     Optimized for streaming processing.
-    Performs GeoIP enrichment and bulk inserts.
-
-    Does not commit.
-    Worker controls transaction.
     """
 
-    detection_entries = []
+    if not detections:
+        return 0
+
+
+    rows = []
 
 
     for detection in detections:
+
 
         source_ip = (
             detection.get("source_ip")
@@ -35,92 +39,106 @@ def save_detections(detections: list[dict]) -> list[Detection]:
         )
 
 
-        entry = Detection(
+        rows.append(
 
-            attack_type=detection.get(
-                "attack_type",
-                ""
-            ),
+            {
 
-            severity=detection.get(
-                "severity",
-                ""
-            ),
-
-            source_ip=source_ip,
+                "attack_type":
+                    detection.get(
+                        "attack_type",
+                        ""
+                    ),
 
 
-            is_private_ip=location.get(
-                "is_private_ip",
-                False
-            ),
+                "severity":
+                    detection.get(
+                        "severity",
+                        ""
+                    ),
 
 
-            country=location.get(
-                "country"
-            ),
+                "source_ip":
+                    source_ip,
 
 
-            city=location.get(
-                "city"
-            ),
+                "is_private_ip":
+                    location.get(
+                        "is_private_ip",
+                        False
+                    ),
 
 
-            latitude=location.get(
-                "latitude"
-            ),
+                "country":
+                    location.get(
+                        "country"
+                    ),
 
 
-            longitude=location.get(
-                "longitude"
-            ),
+                "city":
+                    location.get(
+                        "city"
+                    ),
 
 
-            timestamp=detection.get(
-                "timestamp"
-            ),
+                "latitude":
+                    location.get(
+                        "latitude"
+                    ),
 
 
-            matched_pattern=detection.get(
-                "matched_pattern"
-            ),
+                "longitude":
+                    location.get(
+                        "longitude"
+                    ),
 
 
-            http_method=detection.get(
-                "http_method"
-            ),
+                "timestamp":
+                    detection.get(
+                        "timestamp"
+                    ),
 
 
-            request_path=detection.get(
-                "request_path"
-            ),
+                "matched_pattern":
+                    detection.get(
+                        "matched_pattern"
+                    ),
 
 
-            status_code=detection.get(
-                "status_code"
-            ),
+                "http_method":
+                    detection.get(
+                        "http_method"
+                    ),
 
 
-            raw_log=detection.get(
-                "raw_log"
-            ),
+                "request_path":
+                    detection.get(
+                        "request_path"
+                    ),
+
+
+                "status_code":
+                    detection.get(
+                        "status_code"
+                    ),
+
+
+                "raw_log":
+                    detection.get(
+                        "raw_log"
+                    ),
+
+            }
 
         )
 
 
-        detection_entries.append(
-            entry
-        )
+    db.session.bulk_insert_mappings(
+        Detection,
+        rows
+    )
 
 
-    if detection_entries:
-
-        db.session.add_all(
-            detection_entries
-        )
+    db.session.flush()
 
 
-        db.session.flush()
-
-
-    return detection_entries
+    return len(rows)

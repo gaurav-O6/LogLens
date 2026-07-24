@@ -2,72 +2,66 @@ from app.database.db import db
 from app.models.log_entry import LogEntry
 
 
-def save_logs(parsed_logs: list[dict]) -> list[dict]:
+def save_logs(
+    parsed_logs: list[dict]
+) -> int:
     """
-    Save a batch of parsed log entries.
+    Bulk insert parsed logs.
 
-    Every log event is stored.
-    Duplicate requests are valid events in security analysis.
-
-    Transaction is controlled by the worker.
+    Designed for large files.
     """
 
     if not parsed_logs:
-        return []
+        return 0
 
 
-    entries = []
+    rows = []
 
 
     for log in parsed_logs:
 
-        entry = LogEntry(
+        rows.append(
+            {
+                "ip_address": log.get(
+                    "ip",
+                    ""
+                ),
 
-            ip_address=log.get(
-                "ip",
-                ""
-            ),
+                "timestamp": log.get(
+                    "timestamp",
+                    ""
+                ),
 
-            timestamp=log.get(
-                "timestamp",
-                ""
-            ),
+                "method": log.get(
+                    "method",
+                    ""
+                ),
 
-            method=log.get(
-                "method",
-                ""
-            ),
+                "path": log.get(
+                    "path",
+                    ""
+                ),
 
-            path=log.get(
-                "path",
-                ""
-            ),
+                "status_code": log.get(
+                    "status_code",
+                    0
+                ),
 
-            status_code=log.get(
-                "status_code",
-                0
-            ),
-
-            user_agent=log.get(
-                "user_agent",
-                ""
-            ),
-
+                "user_agent": log.get(
+                    "user_agent",
+                    ""
+                ),
+            }
         )
 
 
-        entries.append(
-            entry
-        )
+    db.session.bulk_insert_mappings(
+        LogEntry,
+        rows
+    )
 
 
-    if entries:
-
-        db.session.bulk_save_objects(
-            entries
-        )
-
-        db.session.flush()
+    db.session.flush()
 
 
-    return parsed_logs
+    return len(rows)

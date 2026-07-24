@@ -17,7 +17,7 @@ from app.services.detection_service import save_detections
 class ProcessingService:
 
 
-    BATCH_SIZE = 5000
+    BATCH_SIZE = 1000
 
 
     def __init__(self):
@@ -112,6 +112,8 @@ class ProcessingService:
                     log_batch
                 )
 
+                db.session.expunge_all()
+
 
                 log_batch.clear()
 
@@ -161,6 +163,8 @@ class ProcessingService:
                 detection_count += len(
                     detection_batch
                 )
+
+                db.session.expunge_all()
 
 
                 detection_batch.clear()
