@@ -89,7 +89,7 @@ def resolve_log_file(
 
 
     #
-    # Demo file
+    # Demo local file
     #
     if possible_path.exists():
 
@@ -114,6 +114,8 @@ def resolve_log_file(
 
 
     return local_file, True
+
+
 
 
 
@@ -156,12 +158,10 @@ def process_log_job(
         try:
 
 
-
             print(
                 f"[WORKER] Starting job {job_id}",
                 flush=True
             )
-
 
 
 
@@ -173,15 +173,13 @@ def process_log_job(
 
             if not job:
 
-
                 print(
-                    "[WORKER] Job not found",
+                    "[WORKER] Job not found:",
+                    job_id,
                     flush=True
                 )
 
-
                 return
-
 
 
 
@@ -206,14 +204,10 @@ def process_log_job(
 
 
 
-            #
-            # If it is not a local path,
-            # it came from R2
-            #
+
             if cleanup_temp_file:
 
                 r2_object = True
-
 
 
 
@@ -227,6 +221,34 @@ def process_log_job(
 
 
 
+            #
+            # File diagnostics
+            #
+            if local_file.exists():
+
+                size_mb = (
+                    local_file.stat().st_size
+                    /
+                    (1024 * 1024)
+                )
+
+
+                print(
+                    "[WORKER] File size:",
+                    round(size_mb, 2),
+                    "MB",
+                    flush=True
+                )
+
+
+
+
+            print(
+                "[WORKER] Entering ProcessingService",
+                flush=True
+            )
+
+
 
 
             processor = ProcessingService()
@@ -234,7 +256,16 @@ def process_log_job(
 
 
             result = processor.process_file(
-                local_file
+                local_file,
+                job_id
+            )
+
+
+
+
+            print(
+                "[WORKER] ProcessingService returned",
+                flush=True
             )
 
 
@@ -246,24 +277,25 @@ def process_log_job(
             )
 
 
-            job.status = "completed"
-
-            job.progress = 100
-
-            job.completed_at = datetime.utcnow()
+            if job:
 
 
+                job.status = "completed"
 
-            db.session.commit()
+                job.progress = 100
 
+                job.completed_at = datetime.utcnow()
+
+
+
+                db.session.commit()
 
 
 
 
 
             #
-            # Remove processed upload
-            # from Cloudflare R2
+            # Delete processed upload from R2
             #
             if r2_object:
 
@@ -314,6 +346,7 @@ def process_log_job(
 
 
 
+
         except Exception as error:
 
 
@@ -322,7 +355,6 @@ def process_log_job(
                 "[WORKER] FAILED",
                 flush=True
             )
-
 
 
             traceback.print_exc()
@@ -360,12 +392,15 @@ def process_log_job(
 
 
 
+
+
+
         finally:
 
 
 
             #
-            # Remove temporary worker file
+            # Remove worker temp file
             #
             if (
 
@@ -378,9 +413,7 @@ def process_log_job(
             ):
 
 
-
                 try:
-
 
 
                     local_file.unlink()
@@ -403,6 +436,7 @@ def process_log_job(
                         cleanup_error,
                         flush=True
                     )
+
 
 
 

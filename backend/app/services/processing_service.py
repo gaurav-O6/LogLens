@@ -1,5 +1,8 @@
 from pathlib import Path
 
+from app.database.db import db
+from app.models.job import Job
+
 from app.parser.apache_parser import ApacheLogParser
 
 from app.detection.detector import ThreatDetector
@@ -10,18 +13,11 @@ from app.services.log_service import save_logs
 from app.services.detection_service import save_detections
 
 
+
 class ProcessingService:
-    """
-    Coordinates streaming log processing pipeline.
 
-    Designed for large files:
-    - 500MB+
-    - line-by-line parsing
-    - controlled memory usage
-    - batch database writes
-    """
 
-    BATCH_SIZE = 500
+    BATCH_SIZE = 5000
 
 
     def __init__(self):
@@ -38,11 +34,9 @@ class ProcessingService:
 
     def process_file(
         self,
-        file_path: Path
-    ) -> dict:
-        """
-        Stream process log file.
-        """
+        file_path: Path,
+        job_id=None
+    ):
 
 
         parsed_count = 0
@@ -77,26 +71,22 @@ class ProcessingService:
 
 
 
-            if threats:
-
-                for threat in threats:
+            for threat in threats:
 
 
-                    detection_batch.append(
-                        threat
-                    )
-
-
-                    self.aggregation_service.add_detection(
-                        threat
-                    )
-
-
-
-            brute_force = (
-                self.brute_force_detector.process(
-                    log_entry
+                detection_batch.append(
+                    threat
                 )
+
+
+                self.aggregation_service.add_detection(
+                    threat
+                )
+
+
+
+            brute_force = self.brute_force_detector.process(
+                log_entry
             )
 
 
@@ -118,21 +108,44 @@ class ProcessingService:
             if len(log_batch) >= self.BATCH_SIZE:
 
 
-                batch_number += 1
-
-
-                print(
-                    f"[PROCESS] Saving log batch {batch_number} | Parsed={parsed_count}",
-                    flush=True
-                )
-
-
                 save_logs(
                     log_batch
                 )
 
 
                 log_batch.clear()
+
+
+                batch_number += 1
+
+
+
+                if job_id:
+
+
+                    job = Job.query.get(
+                        job_id
+                    )
+
+
+                    if job:
+
+
+                        job.progress = min(
+                            90,
+                            10 + batch_number
+                        )
+
+
+                        db.session.commit()
+
+
+
+                print(
+                    f"[PROCESS] batch={batch_number} parsed={parsed_count}",
+                    flush=True
+                )
+
 
 
 
@@ -155,12 +168,8 @@ class ProcessingService:
 
 
 
-        #
-        # Remaining logs
-        #
 
         if log_batch:
-
 
             save_logs(
                 log_batch
@@ -168,17 +177,11 @@ class ProcessingService:
 
 
 
-        #
-        # Remaining detections
-        #
-
         if detection_batch:
-
 
             save_detections(
                 detection_batch
             )
-
 
             detection_count += len(
                 detection_batch
@@ -186,15 +189,14 @@ class ProcessingService:
 
 
 
-
         print(
-            f"[PROCESS] COMPLETE Parsed={parsed_count} Detections={detection_count}",
+            f"[PROCESS COMPLETE] parsed={parsed_count} detections={detection_count}",
             flush=True
         )
 
 
-
         return {
+
 
             "parsed_count":
                 parsed_count,
