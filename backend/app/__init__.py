@@ -41,13 +41,16 @@ from app.database.db import db
 from app.database.migrate import migrate
 
 
+# ==========================================================
+# APPLICATION FACTORY
+# ==========================================================
+
 def create_app() -> Flask:
     """
     Create and configure Flask application.
     """
 
     app = Flask(__name__)
-
 
     # ======================================================
     # LOAD CONFIGURATION
@@ -57,23 +60,22 @@ def create_app() -> Flask:
         Config
     )
 
-
     # ======================================================
     # CORS CONFIGURATION
     # ======================================================
 
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+    ]
+
     CORS(
         app,
-
         resources={
             r"/api/*": {
-                "origins": [
-                    "http://localhost:5173",
-                    "http://127.0.0.1:5173",
-                ]
+                "origins": allowed_origins
             }
         },
-
         methods=[
             "GET",
             "POST",
@@ -81,17 +83,15 @@ def create_app() -> Flask:
             "DELETE",
             "OPTIONS",
         ],
-
         allow_headers=[
             "Content-Type",
             "Authorization",
         ],
-
         expose_headers=[
             "Content-Disposition",
         ],
+        supports_credentials=False,
     )
-
 
     # ======================================================
     # INITIALIZE EXTENSIONS
@@ -105,7 +105,6 @@ def create_app() -> Flask:
         app,
         db
     )
-
 
     # ======================================================
     # REGISTER BLUEPRINTS
@@ -130,10 +129,5 @@ def create_app() -> Flask:
     app.register_blueprint(
         admin_bp
     )
-
-
-    # ======================================================
-    # APPLICATION READY
-    # ======================================================
 
     return app
