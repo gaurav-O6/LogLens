@@ -1,6 +1,7 @@
-﻿from time import perf_counter
 
-from sqlalchemy import insert, text
+from time import perf_counter
+
+from sqlalchemy import insert
 
 from app.database.db import db
 from app.models.detection import Detection
@@ -10,166 +11,9 @@ from app.services.geoip_service import GeoIPService
 
 geoip_service = GeoIPService()
 
-_DIAGNOSTICS_PRINTED = False
-
-
-def _print_detection_db_diagnostics():
-
-    global _DIAGNOSTICS_PRINTED
-
-    if _DIAGNOSTICS_PRINTED:
-        return
-
-    _DIAGNOSTICS_PRINTED = True
-
-    print(
-        "\n"
-        "============================================================\n"
-        "DETECTION DATABASE DIAGNOSTICS\n"
-        "============================================================",
-        flush=True,
-    )
-
-    try:
-
-        row = db.session.execute(
-            text(
-                """
-                SELECT
-                    current_database(),
-                    current_user,
-                    version()
-                """
-            )
-        ).fetchone()
-
-        print(f"[DB] Database : {row[0]}", flush=True)
-        print(f"[DB] User     : {row[1]}", flush=True)
-        print(f"[DB] Version  : {row[2]}", flush=True)
-
-        indexes = db.session.execute(
-            text(
-                """
-                SELECT
-                    indexname,
-                    indexdef
-                FROM pg_indexes
-                WHERE schemaname = 'public'
-                  AND tablename = 'detections'
-                ORDER BY indexname
-                """
-            )
-        ).fetchall()
-
-        print("\n[DB] DETECTION INDEXES", flush=True)
-
-        if indexes:
-            for index in indexes:
-                print(f"    {index[0]}", flush=True)
-                print(f"        {index[1]}", flush=True)
-        else:
-            print("    NONE", flush=True)
-
-        constraints = db.session.execute(
-            text(
-                """
-                SELECT
-                    conname,
-                    contype,
-                    pg_get_constraintdef(oid)
-                FROM pg_constraint
-                WHERE conrelid = 'public.detections'::regclass
-                ORDER BY conname
-                """
-            )
-        ).fetchall()
-
-        print("\n[DB] DETECTION CONSTRAINTS", flush=True)
-
-        if constraints:
-            for constraint in constraints:
-                print(
-                    f"    {constraint[0]} | type={constraint[1]}",
-                    flush=True,
-                )
-                print(
-                    f"        {constraint[2]}",
-                    flush=True,
-                )
-        else:
-            print("    NONE", flush=True)
-
-        triggers = db.session.execute(
-            text(
-                """
-                SELECT
-                    tgname,
-                    pg_get_triggerdef(oid)
-                FROM pg_trigger
-                WHERE tgrelid = 'public.detections'::regclass
-                  AND NOT tgisinternal
-                ORDER BY tgname
-                """
-            )
-        ).fetchall()
-
-        print("\n[DB] DETECTION TRIGGERS", flush=True)
-
-        if triggers:
-            for trigger in triggers:
-                print(f"    {trigger[0]}", flush=True)
-                print(f"        {trigger[1]}", flush=True)
-        else:
-            print("    NONE", flush=True)
-
-        size = db.session.execute(
-            text(
-                """
-                SELECT
-                    pg_size_pretty(
-                        pg_total_relation_size(
-                            'public.detections'::regclass
-                        )
-                    ),
-                    pg_total_relation_size(
-                        'public.detections'::regclass
-                    )
-                """
-            )
-        ).fetchone()
-
-        print("\n[DB] DETECTION TABLE SIZE", flush=True)
-        print(f"    Size  : {size[0]}", flush=True)
-        print(f"    Bytes : {size[1]:,}", flush=True)
-
-        count = db.session.execute(
-            text(
-                """
-                SELECT COUNT(*)
-                FROM public.detections
-                """
-            )
-        ).scalar()
-
-        print(
-            f"\n[DB] Existing rows : {count:,}",
-            flush=True,
-        )
-
-        print(
-            "============================================================\n",
-            flush=True,
-        )
-
-    except Exception as error:
-
-        print(
-            "[DB DIAGNOSTICS ERROR]",
-            repr(error),
-            flush=True,
-        )
-
-        db.session.rollback()
+# Keep SQL statements reasonably sized while still using
+# PostgreSQL multi-row INSERTs instead of one execution per row.
+INSERT_BATCH_SIZE = 500
 
 
 def save_detections(
@@ -181,8 +25,6 @@ def save_detections(
 
     total_start = perf_counter()
 
-    _print_detection_db_diagnostics()
-
     rows = []
 
     geoip_time = 0.0
@@ -191,6 +33,10 @@ def save_detections(
     flush_time = 0.0
 
     geoip_cache = {}
+
+    # ---------------------------------------------------------
+    # BUILD DETECTION ROWS
+    # ---------------------------------------------------------
 
     geoip_start = perf_counter()
 
@@ -205,6 +51,7 @@ def save_detections(
         )
 
         if source_ip in geoip_cache:
+
             location = geoip_cache[source_ip]
 
         else:
@@ -292,16 +139,38 @@ def save_detections(
         - len(geoip_cache)
     )
 
+    # ---------------------------------------------------------
+    # MULTI-ROW DATABASE INSERT
+    # ---------------------------------------------------------
+
     start = perf_counter()
 
-    db.session.execute(
-        insert(Detection),
-        rows
-    )
+    inserted_rows = 0
+
+    for batch_start in range(
+        0,
+        len(rows),
+        INSERT_BATCH_SIZE
+    ):
+
+        batch = rows[
+            batch_start:
+            batch_start + INSERT_BATCH_SIZE
+        ]
+
+        db.session.execute(
+            insert(Detection).values(batch)
+        )
+
+        inserted_rows += len(batch)
 
     bulk_insert_time = (
         perf_counter() - start
     )
+
+    # ---------------------------------------------------------
+    # FLUSH
+    # ---------------------------------------------------------
 
     start = perf_counter()
 
@@ -311,8 +180,21 @@ def save_detections(
         perf_counter() - start
     )
 
+    # ---------------------------------------------------------
+    # PROFILE
+    # ---------------------------------------------------------
+
     total_time = (
         perf_counter() - total_start
+    )
+
+    batch_count = (
+        (
+            len(rows)
+            + INSERT_BATCH_SIZE
+            - 1
+        )
+        // INSERT_BATCH_SIZE
     )
 
     print(
@@ -321,6 +203,9 @@ def save_detections(
         "DETECTION SAVE PROFILE\n"
         "------------------------------------------------------------\n"
         f"Detections             : {len(detections):,}\n"
+        f"Inserted rows          : {inserted_rows:,}\n"
+        f"Insert batch size      : {INSERT_BATCH_SIZE:,}\n"
+        f"Insert batches         : {batch_count:,}\n"
         f"Unique IPs             : {len(geoip_cache):,}\n"
         f"GeoIP cache hits       : {cache_hits:,}\n"
         "\n"
@@ -334,4 +219,4 @@ def save_detections(
         flush=True,
     )
 
-    return len(rows)
+    return inserted_rows
