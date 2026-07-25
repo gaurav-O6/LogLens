@@ -16,17 +16,13 @@ from app.services.detection_service import save_detections
 
 class ProcessingService:
 
-    # Larger batches = fewer database round trips
     BATCH_SIZE = 5000
 
     def __init__(self):
 
         self.parser = ApacheLogParser()
-
         self.threat_detector = ThreatDetector()
-
         self.brute_force_detector = BruteForceDetector()
-
         self.aggregation_service = AggregationService()
 
     def process_file(
@@ -45,23 +41,34 @@ class ProcessingService:
 
         batch_number = 0
 
-        # ---------------------------------------------------------
+        # =========================================================
         # PROFILING TIMERS
-        # ---------------------------------------------------------
+        # =========================================================
 
         parser_time = 0.0
         threat_detection_time = 0.0
         brute_force_time = 0.0
+        aggregation_time = 0.0
+
         log_db_time = 0.0
         detection_db_time = 0.0
-        aggregation_time = 0.0
         job_update_time = 0.0
 
-        # ---------------------------------------------------------
+        # =========================================================
         # PROCESS FILE
-        # ---------------------------------------------------------
+        # =========================================================
 
-        for log_entry in self.parser.parse_file(file_path):
+        for raw_log_entry in self.parser.parse_file(file_path):
+
+            # -----------------------------------------------------
+            # PARSER / ITERATION
+            # -----------------------------------------------------
+
+            start = perf_counter()
+
+            log_entry = raw_log_entry
+
+            parser_time += perf_counter() - start
 
             parsed_count += 1
 
@@ -77,7 +84,9 @@ class ProcessingService:
                 log_entry
             )
 
-            threat_detection_time += perf_counter() - start
+            threat_detection_time += (
+                perf_counter() - start
+            )
 
             # -----------------------------------------------------
             # PROCESS THREATS
@@ -95,7 +104,9 @@ class ProcessingService:
                     threat
                 )
 
-                aggregation_time += perf_counter() - start
+                aggregation_time += (
+                    perf_counter() - start
+                )
 
             # -----------------------------------------------------
             # BRUTE FORCE DETECTION
@@ -107,7 +118,9 @@ class ProcessingService:
                 log_entry
             )
 
-            brute_force_time += perf_counter() - start
+            brute_force_time += (
+                perf_counter() - start
+            )
 
             if brute_force:
 
@@ -123,7 +136,9 @@ class ProcessingService:
                     brute_force
                 )
 
-                aggregation_time += perf_counter() - start
+                aggregation_time += (
+                    perf_counter() - start
+                )
 
             # -----------------------------------------------------
             # SAVE LOG BATCH
@@ -139,7 +154,9 @@ class ProcessingService:
 
                 db.session.commit()
 
-                log_db_time += perf_counter() - start
+                log_db_time += (
+                    perf_counter() - start
+                )
 
                 log_batch.clear()
 
@@ -162,7 +179,9 @@ class ProcessingService:
 
                         db.session.commit()
 
-                    job_update_time += perf_counter() - start
+                    job_update_time += (
+                        perf_counter() - start
+                    )
 
                 print(
                     f"[PROCESS] Saved log batch "
@@ -185,7 +204,9 @@ class ProcessingService:
 
                 db.session.commit()
 
-                detection_db_time += perf_counter() - start
+                detection_db_time += (
+                    perf_counter() - start
+                )
 
                 detection_count += len(
                     detection_batch
@@ -199,9 +220,9 @@ class ProcessingService:
                     flush=True
                 )
 
-        # ---------------------------------------------------------
+        # =========================================================
         # REMAINING LOGS
-        # ---------------------------------------------------------
+        # =========================================================
 
         if log_batch:
 
@@ -213,16 +234,18 @@ class ProcessingService:
 
             db.session.commit()
 
-            log_db_time += perf_counter() - start
+            log_db_time += (
+                perf_counter() - start
+            )
 
             print(
                 "[PROCESS] Saved final log batch",
                 flush=True
             )
 
-        # ---------------------------------------------------------
+        # =========================================================
         # REMAINING DETECTIONS
-        # ---------------------------------------------------------
+        # =========================================================
 
         if detection_batch:
 
@@ -234,7 +257,9 @@ class ProcessingService:
 
             db.session.commit()
 
-            detection_db_time += perf_counter() - start
+            detection_db_time += (
+                perf_counter() - start
+            )
 
             detection_count += len(
                 detection_batch
@@ -245,9 +270,9 @@ class ProcessingService:
                 flush=True
             )
 
-        # ---------------------------------------------------------
-        # FINAL PROGRESS
-        # ---------------------------------------------------------
+        # =========================================================
+        # FINAL JOB UPDATE
+        # =========================================================
 
         if job_id:
 
@@ -263,21 +288,25 @@ class ProcessingService:
 
                 db.session.commit()
 
-            job_update_time += perf_counter() - start
+            job_update_time += (
+                perf_counter() - start
+            )
 
-        # ---------------------------------------------------------
-        # PROFILING RESULTS
-        # ---------------------------------------------------------
+        # =========================================================
+        # FINAL PROFILE
+        # =========================================================
 
-        total_time = perf_counter() - total_start
+        total_time = (
+            perf_counter() - total_start
+        )
 
         measured_time = (
             parser_time
             + threat_detection_time
             + brute_force_time
+            + aggregation_time
             + log_db_time
             + detection_db_time
-            + aggregation_time
             + job_update_time
         )
 
@@ -295,14 +324,14 @@ class ProcessingService:
             f"Parsed lines          : {parsed_count:,}\n"
             f"Detections            : {detection_count:,}\n"
             "\n"
-            f"Parser                 : {parser_time:.3f}s\n"
-            f"Threat detection       : {threat_detection_time:.3f}s\n"
-            f"Brute-force detection  : {brute_force_time:.3f}s\n"
-            f"Aggregation            : {aggregation_time:.3f}s\n"
-            f"Log database writes    : {log_db_time:.3f}s\n"
-            f"Detection DB writes    : {detection_db_time:.3f}s\n"
-            f"Job updates            : {job_update_time:.3f}s\n"
-            f"Other/unmeasured       : {unmeasured_time:.3f}s\n"
+            f"Parser iteration      : {parser_time:.3f}s\n"
+            f"Threat detection      : {threat_detection_time:.3f}s\n"
+            f"Brute-force detection : {brute_force_time:.3f}s\n"
+            f"Aggregation           : {aggregation_time:.3f}s\n"
+            f"Log database writes   : {log_db_time:.3f}s\n"
+            f"Detection DB writes   : {detection_db_time:.3f}s\n"
+            f"Job updates           : {job_update_time:.3f}s\n"
+            f"Other/unmeasured      : {unmeasured_time:.3f}s\n"
             "============================================================\n",
             flush=True
         )
@@ -315,13 +344,7 @@ class ProcessingService:
         )
 
         return {
-
-            "parsed_count":
-                parsed_count,
-
-            "detection_count":
-                detection_count,
-
-            "summary":
-                self.aggregation_service.get_summary()
+            "parsed_count": parsed_count,
+            "detection_count": detection_count,
+            "summary": self.aggregation_service.get_summary(),
         }
