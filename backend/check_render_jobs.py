@@ -1,52 +1,128 @@
+import os
+from time import perf_counter
+
 from sqlalchemy import create_engine, text
 
-DATABASE_URL = "postgresql+psycopg://loglens:REDACTED@dpg-d9gau9f41pts738de1t0-a.singapore-postgres.render.com/loglens_nd3w"
 
-engine = create_engine(DATABASE_URL)
+DATABASE_URL = os.environ["DATABASE_URL"]
 
-with engine.begin() as conn:
 
-    print("===== CURRENT JOBS =====")
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+)
 
-    rows = conn.execute(text("""
-        SELECT
-            id,
-            status,
-            progress,
-            created_at,
-            started_at,
-            completed_at
-        FROM jobs
-        ORDER BY id DESC
-        LIMIT 20;
-    """))
 
-    for row in rows:
-        print(row)
+with engine.connect() as conn:
 
-    result = conn.execute(text("""
-        UPDATE jobs
-        SET
-            status='failed',
-            progress=0,
-            completed_at=NOW(),
-            error_message='Worker abandoned'
-        WHERE status='processing';
-    """))
+    print("=" * 60)
+    print("POSTGRESQL PERFORMANCE TEST")
+    print("=" * 60)
 
-    print(f"\nUpdated {result.rowcount} jobs.")
+    start = perf_counter()
 
-    print("\n===== AFTER UPDATE =====")
+    conn.execute(text("SELECT 1"))
 
-    rows = conn.execute(text("""
-        SELECT
-            id,
-            status,
-            progress
-        FROM jobs
-        ORDER BY id DESC
-        LIMIT 20;
-    """))
+    elapsed = perf_counter() - start
 
-    for row in rows:
-        print(row)
+    print(f"\nSELECT 1 round trip : {elapsed:.3f}s")
+
+    start = perf_counter()
+
+    result = conn.execute(
+        text("SELECT COUNT(*) FROM detections")
+    )
+
+    count = result.scalar()
+
+    elapsed = perf_counter() - start
+
+    print(f"Detection count     : {count:,}")
+    print(f"COUNT(*) time       : {elapsed:.3f}s")
+
+    start = perf_counter()
+
+    result = conn.execute(
+        text("""
+            SELECT
+                id,
+                attack_type,
+                severity,
+                source_ip
+            FROM detections
+            ORDER BY id DESC
+            LIMIT 100;
+        """)
+    )
+
+    rows = result.fetchall()
+
+    elapsed = perf_counter() - start
+
+    print(f"\nLatest 100 rows     : {len(rows)}")
+    print(f"Latest query time   : {elapsed:.3f}s")
+
+    start = perf_counter()
+
+    result = conn.execute(
+        text("""
+            SELECT COUNT(*)
+            FROM detections
+            WHERE severity = 'High';
+        """)
+    )
+
+    high_count = result.scalar()
+
+    elapsed = perf_counter() - start
+
+    print(f"\nHigh detections     : {high_count:,}")
+    print(f"Severity query time : {elapsed:.3f}s")
+
+    start = perf_counter()
+
+    result = conn.execute(
+        text("""
+            SELECT
+                id,
+                status,
+                progress,
+                started_at,
+                completed_at
+            FROM jobs
+            ORDER BY id DESC
+            LIMIT 1;
+        """)
+    )
+
+    latest_job = result.fetchone()
+
+    elapsed = perf_counter() - start
+
+    print(f"\nLatest job          : {latest_job}")
+    print(f"Job query time      : {elapsed:.3f}s")
+
+    print("\n" + "=" * 60)
+    print("INDEX INFORMATION")
+    print("=" * 60)
+
+    indexes = conn.execute(
+        text("""
+            SELECT
+                indexname,
+                indexdef
+            FROM pg_indexes
+            WHERE tablename = 'detections'
+            ORDER BY indexname;
+        """)
+    )
+
+    for index in indexes:
+        print(
+            f"\n{index.indexname}\n"
+            f"  {index.indexdef}"
+        )
+
+    print("\n" + "=" * 60)
+    print("TEST COMPLETE")
+    print("=" * 60)
