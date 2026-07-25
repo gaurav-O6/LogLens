@@ -1,5 +1,6 @@
-
 from time import perf_counter
+
+from sqlalchemy import insert
 
 from app.database.db import db
 from app.models.detection import Detection
@@ -15,6 +16,9 @@ def save_detections(
 ) -> int:
     """
     Bulk insert detections with detailed performance profiling.
+
+    Uses SQLAlchemy Core INSERT with executemany-style
+    parameter mappings instead of ORM bulk_insert_mappings().
 
     Measures:
     - GeoIP lookup time
@@ -186,8 +190,8 @@ def save_detections(
 
     start = perf_counter()
 
-    db.session.bulk_insert_mappings(
-        Detection,
+    db.session.execute(
+        insert(Detection),
         rows
     )
 
@@ -227,7 +231,7 @@ def save_detections(
         f"GeoIP lookup time      : {geoip_time:.3f}s\n"
         f"GeoIP phase total      : {total_geoip_phase:.3f}s\n"
         f"Row construction       : {row_build_time:.3f}s\n"
-        f"Bulk insert            : {bulk_insert_time:.3f}s\n"
+        f"SQLAlchemy INSERT      : {bulk_insert_time:.3f}s\n"
         f"Flush                  : {flush_time:.3f}s\n"
         f"Total save time        : {total_time:.3f}s\n"
         "------------------------------------------------------------\n",
