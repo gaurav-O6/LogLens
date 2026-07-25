@@ -5,9 +5,9 @@ from typing import Optional, Iterator
 
 class ApacheLogParser:
     """
-    Parser for Apache Common Log Format (CLF) access logs.
+    Streaming Apache Common Log Format parser.
 
-    Uses streaming parsing so the entire file is not loaded into memory.
+    The file is never loaded entirely into memory.
     """
 
     LOG_PATTERN = re.compile(
@@ -23,59 +23,84 @@ class ApacheLogParser:
         r'"(?P<user_agent>[^"]*)"'
     )
 
+    def parse_line(
+        self,
+        line: str,
+    ) -> Optional[dict]:
 
-    def parse_line(self, line: str) -> Optional[dict]:
-
-        match = self.LOG_PATTERN.match(line)
+        match = self.LOG_PATTERN.match(
+            line
+        )
 
         if not match:
             return None
 
         return {
-
             "ip": match.group("ip"),
-
             "timestamp": match.group("timestamp"),
-
             "method": match.group("method"),
-
             "path": match.group("path"),
-
-            "status_code": int(match.group("status_code")),
-
+            "status_code": int(
+                match.group("status_code")
+            ),
             "user_agent": match.group("user_agent"),
-
             "raw_log": line,
-
         }
 
-
-    def parse_file(
+    def iter_lines(
         self,
-        file_path: Path
-    ) -> Iterator[dict]:
+        file_path: Path,
+    ) -> Iterator[str]:
+        """
+        Stream raw lines from the log file.
 
-        matched = 0
-        skipped = 0
+        This separates file I/O from parsing so the processing
+        pipeline can profile the actual parser independently.
+        """
 
         with file_path.open(
             "r",
             encoding="utf-8",
             errors="ignore",
+            buffering=1024 * 1024,
         ) as file:
 
             for line in file:
 
-                raw_line = line.rstrip("\n")
+                yield line.rstrip("\n")
 
-                parsed = self.parse_line(raw_line)
+    def parse_file(
+        self,
+        file_path: Path,
+    ) -> Iterator[dict]:
 
-                if parsed is None:
-                    skipped += 1
-                    continue
+        matched = 0
+        skipped = 0
 
-                matched += 1
-                yield parsed
+        for raw_line in self.iter_lines(
+            file_path
+        ):
 
-        print(f"[PARSER] Matched: {matched:,}")
-        print(f"[PARSER] Skipped: {skipped:,}")
+            parsed = self.parse_line(
+                raw_line
+            )
+
+            if parsed is None:
+
+                skipped += 1
+
+                continue
+
+            matched += 1
+
+            yield parsed
+
+        print(
+            f"[PARSER] Matched: {matched:,}",
+            flush=True,
+        )
+
+        print(
+            f"[PARSER] Skipped: {skipped:,}",
+            flush=True,
+        )
