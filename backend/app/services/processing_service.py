@@ -1,4 +1,5 @@
 from pathlib import Path
+from time import perf_counter
 
 from app.database.db import db
 from app.models.job import Job
@@ -13,12 +14,10 @@ from app.services.log_service import save_logs
 from app.services.detection_service import save_detections
 
 
-
 class ProcessingService:
 
     # Larger batches = fewer database round trips
     BATCH_SIZE = 5000
-
 
     def __init__(self):
 
@@ -30,276 +29,299 @@ class ProcessingService:
 
         self.aggregation_service = AggregationService()
 
-
-
     def process_file(
         self,
         file_path: Path,
         job_id=None
     ):
 
+        total_start = perf_counter()
 
         parsed_count = 0
-
         detection_count = 0
 
         log_batch = []
-
         detection_batch = []
 
         batch_number = 0
 
+        # ---------------------------------------------------------
+        # PROFILING TIMERS
+        # ---------------------------------------------------------
 
+        parser_time = 0.0
+        threat_detection_time = 0.0
+        brute_force_time = 0.0
+        log_db_time = 0.0
+        detection_db_time = 0.0
+        aggregation_time = 0.0
+        job_update_time = 0.0
+
+        # ---------------------------------------------------------
+        # PROCESS FILE
+        # ---------------------------------------------------------
 
         for log_entry in self.parser.parse_file(file_path):
 
-
             parsed_count += 1
 
+            log_batch.append(log_entry)
 
-            log_batch.append(
-                log_entry
-            )
+            # -----------------------------------------------------
+            # THREAT DETECTION
+            # -----------------------------------------------------
 
-
+            start = perf_counter()
 
             threats = self.threat_detector.detect(
                 log_entry
             )
 
+            threat_detection_time += perf_counter() - start
 
+            # -----------------------------------------------------
+            # PROCESS THREATS
+            # -----------------------------------------------------
 
             for threat in threats:
 
-
-                #
-                # Attach upload job ownership
-                #
                 threat["job_id"] = job_id
 
+                detection_batch.append(threat)
 
-
-                detection_batch.append(
-                    threat
-                )
-
+                start = perf_counter()
 
                 self.aggregation_service.add_detection(
                     threat
                 )
 
+                aggregation_time += perf_counter() - start
 
+            # -----------------------------------------------------
+            # BRUTE FORCE DETECTION
+            # -----------------------------------------------------
 
-
+            start = perf_counter()
 
             brute_force = self.brute_force_detector.process(
                 log_entry
             )
 
-
+            brute_force_time += perf_counter() - start
 
             if brute_force:
 
-
-                #
-                # Attach upload job ownership
-                #
                 brute_force["job_id"] = job_id
-
-
 
                 detection_batch.append(
                     brute_force
                 )
 
+                start = perf_counter()
 
                 self.aggregation_service.add_detection(
                     brute_force
                 )
 
+                aggregation_time += perf_counter() - start
 
+            # -----------------------------------------------------
+            # SAVE LOG BATCH
+            # -----------------------------------------------------
 
-
-
-            #
-            # Save log batches
-            #
             if len(log_batch) >= self.BATCH_SIZE:
 
+                start = perf_counter()
 
                 save_logs(
                     log_batch
                 )
 
-
                 db.session.commit()
 
+                log_db_time += perf_counter() - start
 
                 log_batch.clear()
 
-
                 batch_number += 1
-
-
 
                 if job_id:
 
+                    start = perf_counter()
 
                     job = Job.query.get(
                         job_id
                     )
 
-
                     if job:
-
 
                         job.progress = min(
                             90,
                             10 + batch_number
                         )
 
-
                         db.session.commit()
 
-
+                    job_update_time += perf_counter() - start
 
                 print(
-                    f"[PROCESS] Saved log batch {batch_number} | Parsed={parsed_count:,}",
+                    f"[PROCESS] Saved log batch "
+                    f"{batch_number} | "
+                    f"Parsed={parsed_count:,}",
                     flush=True
                 )
 
+            # -----------------------------------------------------
+            # SAVE DETECTION BATCH
+            # -----------------------------------------------------
 
-
-
-
-            #
-            # Save detection batches
-            #
             if len(detection_batch) >= self.BATCH_SIZE:
 
+                start = perf_counter()
 
                 save_detections(
                     detection_batch
                 )
 
-
                 db.session.commit()
 
-
+                detection_db_time += perf_counter() - start
 
                 detection_count += len(
                     detection_batch
                 )
 
-
                 detection_batch.clear()
 
-
-
                 print(
-                    f"[PROCESS] Saved detection batch | Total detections={detection_count:,}",
+                    f"[PROCESS] Saved detection batch | "
+                    f"Total detections={detection_count:,}",
                     flush=True
                 )
 
+        # ---------------------------------------------------------
+        # REMAINING LOGS
+        # ---------------------------------------------------------
 
-
-
-
-        #
-        # Remaining logs
-        #
         if log_batch:
 
+            start = perf_counter()
 
             save_logs(
                 log_batch
             )
 
-
             db.session.commit()
 
-
+            log_db_time += perf_counter() - start
 
             print(
                 "[PROCESS] Saved final log batch",
                 flush=True
             )
 
+        # ---------------------------------------------------------
+        # REMAINING DETECTIONS
+        # ---------------------------------------------------------
 
-
-
-
-        #
-        # Remaining detections
-        #
         if detection_batch:
 
+            start = perf_counter()
 
             save_detections(
                 detection_batch
             )
 
-
             db.session.commit()
 
-
+            detection_db_time += perf_counter() - start
 
             detection_count += len(
                 detection_batch
             )
-
 
             print(
                 "[PROCESS] Saved final detection batch",
                 flush=True
             )
 
+        # ---------------------------------------------------------
+        # FINAL PROGRESS
+        # ---------------------------------------------------------
 
-
-
-
-        #
-        # Final progress update
-        #
         if job_id:
 
+            start = perf_counter()
 
             job = Job.query.get(
                 job_id
             )
 
-
             if job:
-
 
                 job.progress = 95
 
-
                 db.session.commit()
 
+            job_update_time += perf_counter() - start
 
+        # ---------------------------------------------------------
+        # PROFILING RESULTS
+        # ---------------------------------------------------------
 
+        total_time = perf_counter() - total_start
 
+        measured_time = (
+            parser_time
+            + threat_detection_time
+            + brute_force_time
+            + log_db_time
+            + detection_db_time
+            + aggregation_time
+            + job_update_time
+        )
+
+        unmeasured_time = max(
+            0.0,
+            total_time - measured_time
+        )
 
         print(
-            f"[PROCESS COMPLETE] Parsed={parsed_count:,} Detections={detection_count:,}",
+            "\n"
+            "============================================================\n"
+            "PROCESSING PROFILE\n"
+            "============================================================\n"
+            f"Total processing time : {total_time:.3f}s\n"
+            f"Parsed lines          : {parsed_count:,}\n"
+            f"Detections            : {detection_count:,}\n"
+            "\n"
+            f"Parser                 : {parser_time:.3f}s\n"
+            f"Threat detection       : {threat_detection_time:.3f}s\n"
+            f"Brute-force detection  : {brute_force_time:.3f}s\n"
+            f"Aggregation            : {aggregation_time:.3f}s\n"
+            f"Log database writes    : {log_db_time:.3f}s\n"
+            f"Detection DB writes    : {detection_db_time:.3f}s\n"
+            f"Job updates            : {job_update_time:.3f}s\n"
+            f"Other/unmeasured       : {unmeasured_time:.3f}s\n"
+            "============================================================\n",
             flush=True
         )
 
-
+        print(
+            f"[PROCESS COMPLETE] "
+            f"Parsed={parsed_count:,} "
+            f"Detections={detection_count:,}",
+            flush=True
+        )
 
         return {
-
 
             "parsed_count":
                 parsed_count,
 
-
             "detection_count":
                 detection_count,
 
-
             "summary":
                 self.aggregation_service.get_summary()
-
         }

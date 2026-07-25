@@ -11,7 +11,6 @@ import api from "../api/client";
 
 function UploadBox({ onComplete }) {
 
-
     const [file, setFile] = useState(null);
 
     const [loading, setLoading] = useState(false);
@@ -22,15 +21,12 @@ function UploadBox({ onComplete }) {
 
     const [status, setStatus] = useState("");
 
-
     const intervalRef = useRef(null);
-
-
 
 
     const stopPolling = () => {
 
-        if(intervalRef.current){
+        if (intervalRef.current) {
 
             clearInterval(
                 intervalRef.current
@@ -41,9 +37,6 @@ function UploadBox({ onComplete }) {
         }
 
     };
-
-
-
 
 
     useEffect(() => {
@@ -57,26 +50,17 @@ function UploadBox({ onComplete }) {
     }, []);
 
 
+    const checkJobStatus = async (jobId) => {
 
-
-
-
-
-    const checkJobStatus = async(jobId)=>{
-
-
-        try{
-
+        try {
 
             const response =
                 await api.get(
                     `/jobs/${jobId}`
                 );
 
-
             const job =
                 response.data;
-
 
 
             console.log(
@@ -85,20 +69,14 @@ function UploadBox({ onComplete }) {
             );
 
 
-
             setStatus(
                 `${job.status.toUpperCase()} (${job.progress || 0}%)`
             );
 
 
-
-
-
-            if(job.status === "completed"){
-
+            if (job.status === "completed") {
 
                 stopPolling();
-
 
                 setResult({
 
@@ -110,156 +88,105 @@ function UploadBox({ onComplete }) {
 
                 });
 
-
-
                 setLoading(false);
 
-
-
-                if(onComplete){
+                if (onComplete) {
 
                     onComplete();
 
                 }
-
 
                 return true;
 
             }
 
 
-
-
-
-
-            if(job.status === "failed"){
-
+            if (job.status === "failed") {
 
                 stopPolling();
 
-
                 setLoading(false);
-
-
 
                 setError(
                     job.error ||
                     "Processing failed."
                 );
 
-
-
                 return true;
 
             }
 
 
-
             return false;
-
-
 
         }
 
-
-        catch(error){
-
+        catch (error) {
 
             console.error(
                 "JOB STATUS ERROR:",
                 error
             );
 
-
             stopPolling();
 
-
             setLoading(false);
-
 
             setError(
                 "Unable to check job status."
             );
 
-
             return true;
 
         }
 
-
     };
 
 
-
-
-
-
-
-
-
-    const pollJobStatus = async(jobId)=>{
-
+    const pollJobStatus = async (jobId) => {
 
         stopPolling();
 
-
-
         const finished =
-            await checkJobStatus(jobId);
+            await checkJobStatus(
+                jobId
+            );
 
-
-
-        if(finished){
+        if (finished) {
 
             return;
 
         }
 
 
-
-
-
-
         intervalRef.current =
             setInterval(
-                async()=>{
-
+                async () => {
 
                     const done =
-                        await checkJobStatus(jobId);
+                        await checkJobStatus(
+                            jobId
+                        );
 
-
-
-                    if(done){
+                    if (done) {
 
                         stopPolling();
 
                     }
 
-
                 },
                 3000
             );
 
-
     };
 
 
-
-
-
-
-
-
-
-    const startProcessing = async(
+    const startProcessing = async (
         endpoint,
-        options={}
-    )=>{
+        options = {}
+    ) => {
 
-
-        try{
-
+        try {
 
             setLoading(true);
 
@@ -267,28 +194,22 @@ function UploadBox({ onComplete }) {
 
             setResult(null);
 
-
             setStatus(
                 "Starting processing..."
             );
 
 
-
-
-
             const response =
                 await api.request({
 
-                    url:endpoint,
+                    url: endpoint,
 
                     method:
                         options.method ||
                         "POST",
 
-
                     data:
                         options.data,
-
 
                     headers:
                         options.headers,
@@ -296,27 +217,17 @@ function UploadBox({ onComplete }) {
                 });
 
 
-
-
-
-
             console.log(
-                "UPLOAD RESPONSE:",
+                "PROCESS RESPONSE:",
                 response.data
             );
-
-
-
 
 
             const jobId =
                 response.data.job_id;
 
 
-
-
-
-            if(!jobId){
+            if (!jobId) {
 
                 throw new Error(
                     "No job id returned from server"
@@ -325,36 +236,226 @@ function UploadBox({ onComplete }) {
             }
 
 
-
-
             setStatus(
                 "Job queued..."
             );
-
 
 
             pollJobStatus(
                 jobId
             );
 
+        }
 
+        catch (error) {
+
+            console.error(
+                "PROCESSING ERROR:",
+                error
+            );
+
+            setLoading(false);
+
+            setError(
+
+                error.response?.data?.error ||
+
+                error.message ||
+
+                "Processing failed."
+
+            );
+
+        }
+
+    };
+
+
+    const handleUpload = async () => {
+
+        if (!file) {
+
+            setError(
+                "Please select a .log file"
+            );
+
+            return;
 
         }
 
 
-        catch(error){
+        console.log(
+            "FILE SELECTED:",
+            file.name,
+            file.size,
+            "bytes"
+        );
 
+
+        try {
+
+            setLoading(true);
+
+            setError("");
+
+            setResult(null);
+
+            setStatus(
+                "Preparing upload..."
+            );
+
+
+            /*
+             * STEP 1
+             *
+             * Ask Flask for a temporary R2
+             * presigned upload URL.
+             *
+             * This request contains JSON only.
+             * The actual log file does NOT go
+             * through Render.
+             */
+
+            const urlResponse =
+                await api.post(
+                    "/logs/upload-url",
+                    {
+                        filename:
+                            file.name,
+
+                        content_type:
+                            file.type ||
+                            "application/octet-stream",
+                    }
+                );
+
+
+            const uploadUrl =
+                urlResponse.data.upload_url;
+
+            const objectName =
+                urlResponse.data.object_name;
+
+
+            if (!uploadUrl || !objectName) {
+
+                throw new Error(
+                    "Server did not return a valid upload URL."
+                );
+
+            }
+
+
+            console.log(
+                "R2 OBJECT:",
+                objectName
+            );
+
+
+            /*
+             * STEP 2
+             *
+             * Upload the actual file directly
+             * from the browser to Cloudflare R2.
+             */
+
+            setStatus(
+                "Uploading log file..."
+            );
+
+
+            const uploadResponse =
+                await fetch(
+                    uploadUrl,
+                    {
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                file.type ||
+                                "application/octet-stream",
+                        },
+
+                        body: file,
+                    }
+                );
+
+
+            if (!uploadResponse.ok) {
+
+                let details = "";
+
+                try {
+
+                    details =
+                        await uploadResponse.text();
+
+                }
+                catch {
+
+                    // Ignore response parsing errors.
+
+                }
+
+
+                console.error(
+                    "R2 UPLOAD FAILED:",
+                    uploadResponse.status,
+                    details
+                );
+
+
+                throw new Error(
+                    `File upload failed (${uploadResponse.status}).`
+                );
+
+            }
+
+
+            console.log(
+                "R2 UPLOAD COMPLETE"
+            );
+
+
+            /*
+             * STEP 3
+             *
+             * Tell Flask that the R2 object exists.
+             *
+             * This request is tiny JSON, so Render's
+             * WAF never receives the actual log file.
+             */
+
+            setStatus(
+                "Starting analysis..."
+            );
+
+
+            await startProcessing(
+                "/logs/process",
+                {
+                    method: "POST",
+
+                    data: {
+                        object_name:
+                            objectName,
+
+                        filename:
+                            file.name,
+                    },
+                }
+            );
+
+        }
+
+        catch (error) {
 
             console.error(
                 "UPLOAD ERROR:",
                 error
             );
 
-
-
             setLoading(false);
-
-
 
             setError(
 
@@ -366,119 +467,24 @@ function UploadBox({ onComplete }) {
 
             );
 
-
         }
-
 
     };
 
 
-
-
-
-
-
-
-
-    const handleUpload = ()=>{
-
-
-        if(!file){
-
-
-            setError(
-                "Please select a .log file"
-            );
-
-
-            return;
-
-        }
-
-
-
-
-
-        console.log(
-            "FILE SELECTED:",
-            file.name,
-            file.size,
-            "bytes"
-        );
-
-
-
-
-
-        const formData =
-            new FormData();
-
-
-
-
-        formData.append(
-            "file",
-            file
-        );
-
-
-
-
-
-
-        startProcessing(
-
-            "/logs/upload",
-
-            {
-
-                method:"POST",
-
-                data:formData,
-
-                // IMPORTANT:
-                // DO NOT SET CONTENT TYPE
-                // Browser adds multipart boundary automatically
-
-            }
-
-        );
-
-
-    };
-
-
-
-
-
-
-
-
-
-    const handleDemoLoad = ()=>{
-
+    const handleDemoLoad = () => {
 
         startProcessing(
 
             "/logs/demo",
 
             {
-
-                method:"GET",
-
+                method: "GET",
             }
 
         );
 
-
     };
-
-
-
-
-
-
-
 
 
     return (
@@ -486,8 +492,7 @@ function UploadBox({ onComplete }) {
         <div className="upload-box">
 
 
-            <UploadCloud size={48}/>
-
+            <UploadCloud size={48} />
 
 
             <h2>
@@ -495,19 +500,12 @@ function UploadBox({ onComplete }) {
             </h2>
 
 
-
-
             <p>
                 Supports Apache / Nginx .log files
             </p>
 
 
-
-
-
-
             <label className="file-drop">
-
 
                 <input
 
@@ -516,7 +514,7 @@ function UploadBox({ onComplete }) {
                     accept=".log"
 
                     onChange={
-                        (e)=>{
+                        (e) => {
 
                             setFile(
                                 e.target.files[0]
@@ -524,84 +522,69 @@ function UploadBox({ onComplete }) {
 
                             setError("");
 
-                        }
+                            setResult(null);
 
+                            setStatus("");
+
+                        }
                     }
 
                 />
-
 
 
                 <span>
 
                     {
                         file
-                        ? file.name
-                        : "Choose log file"
+                            ? file.name
+                            : "Choose log file"
                     }
 
                 </span>
 
-
-
             </label>
 
 
-
-
-
-
-
             <button
 
-                onClick={handleUpload}
+                onClick={
+                    handleUpload
+                }
 
-                disabled={loading}
+                disabled={
+                    loading
+                }
 
             >
 
-
                 {
                     loading
-                    ? "Processing..."
-                    : "Upload & Analyze"
+                        ? "Processing..."
+                        : "Upload & Analyze"
                 }
-
-
 
             </button>
 
 
-
-
-
-
-
             <button
 
-                onClick={handleDemoLoad}
+                onClick={
+                    handleDemoLoad
+                }
 
-                disabled={loading}
+                disabled={
+                    loading
+                }
 
             >
 
-
                 {
                     loading
-                    ? "Processing..."
-                    : "Load Demo Log"
+                        ? "Processing..."
+                        : "Load Demo Log"
                 }
 
-
-
             </button>
-
-
-
-
-
-
-
 
 
             {
@@ -614,32 +597,18 @@ function UploadBox({ onComplete }) {
             }
 
 
-
-
-
-
-
-
-
             {
                 result &&
 
-
                 <div className="upload-result success">
 
-
-                    <CheckCircle size={20}/>
-
-
+                    <CheckCircle size={20} />
 
                     <div>
-
 
                         <strong>
                             Analysis Complete
                         </strong>
-
-
 
 
                         <p>
@@ -647,70 +616,39 @@ function UploadBox({ onComplete }) {
                         </p>
 
 
-
-
-
                         <button
-
                             onClick={onComplete}
-
                         >
-
                             View Dashboard
-
                         </button>
-
-
 
                     </div>
 
-
-
                 </div>
 
-
             }
-
-
-
-
-
-
-
 
 
             {
                 error &&
 
-
                 <div className="upload-result error">
 
-
-                    <AlertCircle size={20}/>
-
-
+                    <AlertCircle size={20} />
 
                     <span>
-
                         {error}
-
                     </span>
-
-
 
                 </div>
 
-
             }
-
-
 
         </div>
 
     );
 
 }
-
 
 
 export default UploadBox;

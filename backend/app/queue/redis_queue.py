@@ -1,35 +1,72 @@
-import redis
+import os
 
+import redis
 from rq import Queue
 
-from app.config import Config
+
+# ============================================================
+# REDIS CONFIGURATION
+# ============================================================
+
+REDIS_URL = os.getenv(
+    "REDIS_URL",
+    "redis://redis:6379/0",
+)
+
+QUEUE_NAME = "log_processing"
 
 
-redis_connection = redis.from_url(
-    Config.REDIS_URL
+redis_connection = redis.Redis.from_url(
+    REDIS_URL,
+    decode_responses=False,
 )
 
 
 print(
-    "[REDIS]",
-    Config.REDIS_URL
+    f"[REDIS] {REDIS_URL}",
+    flush=True,
 )
 
 
+# ============================================================
+# REDIS CONNECTION CHECK
+# ============================================================
+
 try:
+
+    redis_connection.ping()
+
     print(
-        "[REDIS PING]",
-        redis_connection.ping()
+        "[REDIS PING] True",
+        flush=True,
     )
 
 except Exception as error:
+
     print(
-        "[REDIS ERROR]",
-        error
+        f"[REDIS ERROR] {error}",
+        flush=True,
     )
 
+    raise
+
+
+# ============================================================
+# RQ QUEUE
+# ============================================================
 
 queue = Queue(
-    "log_processing",
-    connection=redis_connection
+    name=QUEUE_NAME,
+    connection=redis_connection,
+)
+
+
+print(
+    f"[RQ] Queue name: {queue.name}",
+    flush=True,
+)
+
+print(
+    f"[RQ] Queue key: {queue.key}",
+    flush=True,
 )

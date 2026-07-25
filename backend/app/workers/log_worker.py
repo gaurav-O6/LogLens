@@ -13,37 +13,17 @@ from app.services.r2_service import r2_service
 def normalize_file_reference(
     file_reference: str
 ) -> str:
-    """
-    Normalize file references so R2 always receives
-    POSIX-style object keys.
 
-    This protects the worker from Windows-generated
-    backslashes such as:
-
-        uploads\\attack_test.log
-
-    becoming:
-
-        uploads/attack_test.log
-    """
-
-    return str(
-        file_reference
-    ).replace(
-        "\\",
-        "/"
-    ).lstrip(
-        "/"
+    return (
+        str(file_reference)
+        .replace("\\", "/")
+        .lstrip("/")
     )
 
 
 def download_uploaded_file(
     filename: str
 ) -> Path:
-    """
-    Download uploaded log from R2
-    into worker temporary storage.
-    """
 
     filename = normalize_file_reference(
         filename
@@ -91,12 +71,6 @@ def download_uploaded_file(
 def resolve_log_file(
     file_reference: str
 ):
-    """
-    Decide whether file is:
-
-    1. Demo local file
-    2. Uploaded R2 object
-    """
 
     possible_path = Path(
         file_reference
@@ -123,14 +97,6 @@ def process_log_job(
     job_id: int,
     file_reference: str
 ):
-    """
-    Background RQ worker.
-
-    Handles:
-
-    - Uploaded logs from R2
-    - Demo logs from repository
-    """
 
     from app import create_app
 
@@ -149,32 +115,45 @@ def process_log_job(
                 flush=True
             )
 
+            # -------------------------------------------------
+            # LOAD JOB
+            # -------------------------------------------------
+
             job = Job.query.get(
                 job_id
             )
 
             if not job:
 
-                print(
-                    "[WORKER] Job not found:",
-                    job_id,
-                    flush=True
+                raise RuntimeError(
+                    f"Database job {job_id} does not exist."
                 )
 
-                return
+            # -------------------------------------------------
+            # MARK PROCESSING
+            # -------------------------------------------------
 
             job.status = "processing"
             job.progress = 10
             job.started_at = datetime.utcnow()
+            job.error_message = None
 
             db.session.commit()
+
+            print(
+                f"[WORKER] Job {job_id} marked processing",
+                flush=True
+            )
+
+            # -------------------------------------------------
+            # RESOLVE FILE
+            # -------------------------------------------------
 
             local_file, cleanup_temp_file = resolve_log_file(
                 file_reference
             )
 
-            if cleanup_temp_file:
-                r2_object = True
+            r2_object = cleanup_temp_file
 
             print(
                 "[WORKER] Processing:",
@@ -196,6 +175,16 @@ def process_log_job(
                     flush=True
                 )
 
+            else:
+
+                raise FileNotFoundError(
+                    f"Log file does not exist: {local_file}"
+                )
+
+            # -------------------------------------------------
+            # PROCESS LOG
+            # -------------------------------------------------
+
             print(
                 "[WORKER] Entering ProcessingService",
                 flush=True
@@ -213,24 +202,44 @@ def process_log_job(
                 flush=True
             )
 
+            # -------------------------------------------------
+            # MARK COMPLETED
+            # -------------------------------------------------
+
             job = Job.query.get(
                 job_id
             )
 
-            if job:
+            if not job:
 
-                job.status = "completed"
-                job.progress = 100
-                job.completed_at = datetime.utcnow()
+                raise RuntimeError(
+                    f"Database job {job_id} disappeared during processing."
+                )
 
-                db.session.commit()
+            job.status = "completed"
+            job.progress = 100
+            job.completed_at = datetime.utcnow()
+            job.error_message = None
+
+            db.session.commit()
+
+            print(
+                f"[WORKER] Completed job {job_id}",
+                flush=True
+            )
+
+            # -------------------------------------------------
+            # DELETE R2 OBJECT
+            # -------------------------------------------------
 
             if r2_object:
 
                 try:
 
-                    normalized_reference = normalize_file_reference(
-                        file_reference
+                    normalized_reference = (
+                        normalize_file_reference(
+                            file_reference
+                        )
                     )
 
                     r2_service.delete_file(
@@ -251,17 +260,12 @@ def process_log_job(
                         flush=True
                     )
 
-            print(
-                f"[WORKER] Completed job {job_id}",
-                flush=True
-            )
-
             return result
 
         except Exception as error:
 
             print(
-                "[WORKER] FAILED",
+                f"[WORKER] FAILED job {job_id}",
                 flush=True
             )
 
@@ -269,17 +273,29 @@ def process_log_job(
 
             db.session.rollback()
 
-            job = Job.query.get(
-                job_id
-            )
+            try:
 
-            if job:
+                job = Job.query.get(
+                    job_id
+                )
 
-                job.status = "failed"
-                job.progress = 0
-                job.error_message = str(error)
+                if job:
 
-                db.session.commit()
+                    job.status = "failed"
+                    job.progress = 0
+                    job.error_message = str(error)
+
+                    db.session.commit()
+
+            except Exception as db_error:
+
+                print(
+                    "[WORKER] Failed to record job error:",
+                    db_error,
+                    flush=True
+                )
+
+                db.session.rollback()
 
             raise
 

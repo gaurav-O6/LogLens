@@ -67,6 +67,43 @@ class R2Service:
             flush=True,
         )
 
+    def generate_presigned_upload_url(
+        self,
+        object_name: str,
+        content_type: str = "application/octet-stream",
+        expires_in: int = 900,
+    ) -> str:
+        """
+        Generate a temporary presigned URL that allows the
+        browser to upload an object directly to R2.
+
+        The Flask server does NOT receive the file itself.
+        """
+
+        print(
+            "[R2] Generating presigned upload URL:",
+            object_name,
+            flush=True,
+        )
+
+        url = self.client.generate_presigned_url(
+            ClientMethod="put_object",
+            Params={
+                "Bucket": self.bucket,
+                "Key": object_name,
+                "ContentType": content_type,
+            },
+            ExpiresIn=expires_in,
+        )
+
+        print(
+            "[R2] Presigned upload URL generated:",
+            object_name,
+            flush=True,
+        )
+
+        return url
+
     def download_file(
         self,
         object_name: str,
