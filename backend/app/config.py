@@ -6,7 +6,6 @@ class Config:
     Base configuration for LogLens.
     """
 
-
     # ==========================================================
     # Flask
     # ==========================================================
@@ -16,7 +15,6 @@ class Config:
         "dev-secret-key",
     )
 
-
     DEBUG = (
         os.getenv(
             "FLASK_DEBUG",
@@ -25,7 +23,22 @@ class Config:
         == "true"
     )
 
+    # ==========================================================
+    # CORS
+    # ==========================================================
 
+    # Comma-separated list of frontend origins.
+    #
+    # Example:
+    #
+    # CORS_ORIGINS=http://localhost:5173,http://localhost:5174,http://localhost:5175,https://your-frontend.onrender.com
+    #
+    CORS_ORIGINS = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,"
+        "http://localhost:5174,"
+        "http://localhost:5175",
+    )
 
     # ==========================================================
     # Database
@@ -36,10 +49,7 @@ class Config:
         "postgresql+psycopg://loglens:loglens@postgres:5432/loglens",
     )
 
-
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-
 
     # ==========================================================
     # Redis
@@ -50,8 +60,6 @@ class Config:
         "redis://redis:6379/0",
     )
 
-
-
     # ==========================================================
     # Upload Settings
     # ==========================================================
@@ -61,25 +69,20 @@ class Config:
         "uploads",
     )
 
-
-    #
-    # Maximum upload size:
-    #
-    # 700 MB
+    # ----------------------------------------------------------
+    # Maximum upload size: 700 MB
     #
     # Reason:
     # - Supports 500-600MB logs
     # - Prevents abuse
     # - Protects R2 storage
-    #
+    # ----------------------------------------------------------
+
     MAX_CONTENT_LENGTH = (
         700 * 1024 * 1024
     )
 
-
     SEND_FILE_MAX_AGE_DEFAULT = 0
-
-
 
     # ==========================================================
     # Cloudflare R2
@@ -89,21 +92,17 @@ class Config:
         "R2_ACCOUNT_ID"
     )
 
-
     R2_BUCKET_NAME = os.getenv(
         "R2_BUCKET_NAME"
     )
-
 
     R2_ENDPOINT = os.getenv(
         "R2_ENDPOINT"
     )
 
-
     R2_ACCESS_KEY_ID = os.getenv(
         "R2_ACCESS_KEY_ID"
     )
-
 
     R2_SECRET_ACCESS_KEY = os.getenv(
         "R2_SECRET_ACCESS_KEY"

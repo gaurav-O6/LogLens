@@ -65,8 +65,9 @@ def create_app() -> Flask:
     # ======================================================
 
     allowed_origins = [
-        "http://localhost:5173",
-        "http://localhost:5174",
+        origin.strip()
+        for origin in app.config["CORS_ORIGINS"].split(",")
+        if origin.strip()
     ]
 
     CORS(
