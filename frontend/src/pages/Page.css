@@ -1986,3 +1986,129 @@ td{
     }
 
 }
+
+/* ==========================================================
+   HISTORY — VIEW ANALYSIS BUTTON
+========================================================== */
+
+.history-view-btn{
+
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    gap:8px;
+
+    min-width:145px;
+
+    padding:9px 13px;
+
+    background:rgba(16,163,127,.08);
+
+    color:#10a37f;
+
+    border:1px solid rgba(16,163,127,.28);
+
+    border-radius:10px;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    line-height:1;
+
+    white-space:nowrap;
+
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        color .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+
+}
+
+
+/* ICON */
+
+.history-view-btn svg{
+
+    width:15px;
+    height:15px;
+
+    flex-shrink:0;
+
+    transition:
+        transform .2s ease;
+
+}
+
+
+/* HOVER */
+
+.history-view-btn:hover{
+
+    background:rgba(16,163,127,.16);
+
+    border-color:#10a37f;
+
+    color:#ffffff;
+
+    transform:translateY(-1px);
+
+    box-shadow:
+        0 4px 14px rgba(16,163,127,.12);
+
+}
+
+
+/* ICON MOVEMENT */
+
+.history-view-btn:hover svg{
+
+    transform:translate(2px,-2px);
+
+}
+
+
+/* CLICK */
+
+.history-view-btn:active{
+
+    transform:translateY(0);
+
+    box-shadow:none;
+
+}
+
+
+/* KEYBOARD ACCESSIBILITY */
+
+.history-view-btn:focus-visible{
+
+    outline:none;
+
+    border-color:#10a37f;
+
+    box-shadow:
+        0 0 0 3px rgba(16,163,127,.18);
+
+}
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+    .history-view-btn{
+
+        min-width:130px;
+
+        padding:8px 11px;
+
+        font-size:12px;
+
+    }
+
+}

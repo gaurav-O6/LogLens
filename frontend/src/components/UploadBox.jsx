@@ -23,6 +23,8 @@ function UploadBox({ onComplete }) {
 
     const intervalRef = useRef(null);
 
+    const mountedRef = useRef(true);
+
 
     const stopPolling = () => {
 
@@ -41,7 +43,11 @@ function UploadBox({ onComplete }) {
 
     useEffect(() => {
 
+        mountedRef.current = true;
+
         return () => {
+
+            mountedRef.current = false;
 
             stopPolling();
 
@@ -69,8 +75,23 @@ function UploadBox({ onComplete }) {
             );
 
 
+            if (!mountedRef.current) {
+
+                return true;
+
+            }
+
+
+            const progress =
+                Number.isFinite(
+                    Number(job.progress)
+                )
+                    ? Number(job.progress)
+                    : 0;
+
+
             setStatus(
-                `${job.status.toUpperCase()} (${job.progress || 0}%)`
+                `${String(job.status || "unknown").toUpperCase()} (${progress}%)`
             );
 
 
@@ -90,11 +111,9 @@ function UploadBox({ onComplete }) {
 
                 setLoading(false);
 
-                if (onComplete) {
-
-                    onComplete();
-
-                }
+                setStatus(
+                    "Analysis complete."
+                );
 
                 return true;
 
@@ -128,12 +147,24 @@ function UploadBox({ onComplete }) {
                 error
             );
 
+
+            if (!mountedRef.current) {
+
+                return true;
+
+            }
+
+
             stopPolling();
 
             setLoading(false);
 
             setError(
+
+                error.response?.data?.error ||
+
                 "Unable to check job status."
+
             );
 
             return true;
@@ -147,10 +178,12 @@ function UploadBox({ onComplete }) {
 
         stopPolling();
 
+
         const finished =
             await checkJobStatus(
                 jobId
             );
+
 
         if (finished) {
 
@@ -230,7 +263,7 @@ function UploadBox({ onComplete }) {
             if (!jobId) {
 
                 throw new Error(
-                    "No job id returned from server"
+                    "No job id returned from server."
                 );
 
             }
@@ -241,7 +274,7 @@ function UploadBox({ onComplete }) {
             );
 
 
-            pollJobStatus(
+            await pollJobStatus(
                 jobId
             );
 
@@ -253,6 +286,16 @@ function UploadBox({ onComplete }) {
                 "PROCESSING ERROR:",
                 error
             );
+
+
+            if (!mountedRef.current) {
+
+                return;
+
+            }
+
+
+            stopPolling();
 
             setLoading(false);
 
@@ -276,7 +319,22 @@ function UploadBox({ onComplete }) {
         if (!file) {
 
             setError(
-                "Please select a .log file"
+                "Please select a .log file."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !file.name
+                .toLowerCase()
+                .endsWith(".log")
+        ) {
+
+            setError(
+                "Please select a .log file."
             );
 
             return;
@@ -311,9 +369,8 @@ function UploadBox({ onComplete }) {
              * Ask Flask for a temporary R2
              * presigned upload URL.
              *
-             * This request contains JSON only.
-             * The actual log file does NOT go
-             * through Render.
+             * Only small JSON metadata is sent
+             * to the backend here.
              */
 
             const urlResponse =
@@ -337,7 +394,10 @@ function UploadBox({ onComplete }) {
                 urlResponse.data.object_name;
 
 
-            if (!uploadUrl || !objectName) {
+            if (
+                !uploadUrl ||
+                !objectName
+            ) {
 
                 throw new Error(
                     "Server did not return a valid upload URL."
@@ -355,8 +415,10 @@ function UploadBox({ onComplete }) {
             /*
              * STEP 2
              *
-             * Upload the actual file directly
+             * Upload the actual log file directly
              * from the browser to Cloudflare R2.
+             *
+             * The log file does NOT pass through Flask.
              */
 
             setStatus(
@@ -385,12 +447,14 @@ function UploadBox({ onComplete }) {
 
                 let details = "";
 
+
                 try {
 
                     details =
                         await uploadResponse.text();
 
                 }
+
                 catch {
 
                     // Ignore response parsing errors.
@@ -420,10 +484,8 @@ function UploadBox({ onComplete }) {
             /*
              * STEP 3
              *
-             * Tell Flask that the R2 object exists.
-             *
-             * This request is tiny JSON, so Render's
-             * WAF never receives the actual log file.
+             * Tell Flask that the R2 object is ready
+             * for processing.
              */
 
             setStatus(
@@ -455,6 +517,16 @@ function UploadBox({ onComplete }) {
                 error
             );
 
+
+            if (!mountedRef.current) {
+
+                return;
+
+            }
+
+
+            stopPolling();
+
             setLoading(false);
 
             setError(
@@ -472,9 +544,9 @@ function UploadBox({ onComplete }) {
     };
 
 
-    const handleDemoLoad = () => {
+    const handleDemoLoad = async () => {
 
-        startProcessing(
+        await startProcessing(
 
             "/logs/demo",
 
@@ -483,6 +555,40 @@ function UploadBox({ onComplete }) {
             }
 
         );
+
+    };
+
+
+    const handleFileChange = (event) => {
+
+        const selectedFile =
+            event.target.files?.[0] || null;
+
+
+        stopPolling();
+
+        setFile(
+            selectedFile
+        );
+
+        setError("");
+
+        setResult(null);
+
+        setStatus("");
+
+    };
+
+
+    const handleViewDashboard = () => {
+
+        stopPolling();
+
+        if (onComplete) {
+
+            onComplete();
+
+        }
 
     };
 
@@ -514,19 +620,11 @@ function UploadBox({ onComplete }) {
                     accept=".log"
 
                     onChange={
-                        (e) => {
+                        handleFileChange
+                    }
 
-                            setFile(
-                                e.target.files[0]
-                            );
-
-                            setError("");
-
-                            setResult(null);
-
-                            setStatus("");
-
-                        }
+                    disabled={
+                        loading
                     }
 
                 />
@@ -552,7 +650,8 @@ function UploadBox({ onComplete }) {
                 }
 
                 disabled={
-                    loading
+                    loading ||
+                    !file
                 }
 
             >
@@ -617,7 +716,9 @@ function UploadBox({ onComplete }) {
 
 
                         <button
-                            onClick={onComplete}
+                            onClick={
+                                handleViewDashboard
+                            }
                         >
                             View Dashboard
                         </button>
