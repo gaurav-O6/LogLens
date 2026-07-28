@@ -16,7 +16,20 @@ from app.services.detection_service import save_detections
 
 class ProcessingService:
 
-    BATCH_SIZE = 5000
+    # ---------------------------------------------------------
+    # LARGE-FILE PROCESSING SETTINGS
+    # ---------------------------------------------------------
+
+    # Logs are relatively lightweight compared with detections,
+    # so we can safely save more of them per database operation.
+    LOG_BATCH_SIZE = 10000
+
+    # Detection batches are controlled by detection_service.py.
+    DETECTION_BATCH_SIZE = 5000
+
+    # Updating the Job row too frequently creates unnecessary
+    # database traffic. Update progress every 50,000 parsed logs.
+    JOB_UPDATE_INTERVAL = 50000
 
     def __init__(self):
 
@@ -46,6 +59,8 @@ class ProcessingService:
 
         batch_number = 0
 
+        last_job_update_count = 0
+
         # =========================================================
         # PROFILING TIMERS
         # =========================================================
@@ -73,7 +88,9 @@ class ProcessingService:
 
             log_entry = raw_log_entry
 
-            parser_time += perf_counter() - start
+            parser_time += (
+                perf_counter() - start
+            )
 
             parsed_count += 1
 
@@ -151,7 +168,7 @@ class ProcessingService:
             # SAVE LOG BATCH
             # -----------------------------------------------------
 
-            if len(log_batch) >= self.BATCH_SIZE:
+            if len(log_batch) >= self.LOG_BATCH_SIZE:
 
                 start = perf_counter()
 
@@ -170,25 +187,6 @@ class ProcessingService:
 
                 batch_number += 1
 
-                start = perf_counter()
-
-                job = Job.query.get(
-                    job_id
-                )
-
-                if job:
-
-                    job.progress = min(
-                        90,
-                        10 + batch_number,
-                    )
-
-                    db.session.commit()
-
-                job_update_time += (
-                    perf_counter() - start
-                )
-
                 print(
                     f"[PROCESS] Saved log batch "
                     f"{batch_number} | "
@@ -200,7 +198,7 @@ class ProcessingService:
             # SAVE DETECTION BATCH
             # -----------------------------------------------------
 
-            if len(detection_batch) >= self.BATCH_SIZE:
+            if len(detection_batch) >= self.DETECTION_BATCH_SIZE:
 
                 start = perf_counter()
 
@@ -222,8 +220,62 @@ class ProcessingService:
 
                 print(
                     f"[PROCESS] Saved detection batch | "
-                    f"Total detections={detection_count:,}",
+                    f"Total detections="
+                    f"{detection_count:,}",
                     flush=True,
+                )
+
+            # -----------------------------------------------------
+            # JOB PROGRESS UPDATE
+            # -----------------------------------------------------
+            #
+            # IMPORTANT:
+            #
+            # Previously this happened every 5,000 lines.
+            # For ~1 million lines that means ~200 DB updates.
+            #
+            # Now it happens every 50,000 lines.
+            #
+            # We intentionally keep the existing 90% ceiling
+            # because an exact percentage requires knowing the
+            # total number of parser records ahead of time.
+            # We will improve this separately after the database
+            # performance work is verified.
+            # -----------------------------------------------------
+
+            if (
+                parsed_count - last_job_update_count
+                >= self.JOB_UPDATE_INTERVAL
+            ):
+
+                start = perf_counter()
+
+                job = Job.query.get(
+                    job_id
+                )
+
+                if job:
+
+                    estimated_progress = min(
+                        90,
+                        10
+                        + (
+                            parsed_count
+                            // self.JOB_UPDATE_INTERVAL
+                        )
+                        * 4,
+                    )
+
+                    job.progress = estimated_progress
+
+                    db.session.commit()
+
+                job_update_time += (
+                    perf_counter() - start
+                )
+
+                last_job_update_count = (
+                    parsed_count
                 )
 
         # =========================================================
@@ -325,18 +377,29 @@ class ProcessingService:
             "============================================================\n"
             "PROCESSING PROFILE\n"
             "============================================================\n"
-            f"Total processing time : {total_time:.3f}s\n"
-            f"Parsed lines          : {parsed_count:,}\n"
-            f"Detections            : {detection_count:,}\n"
+            f"Total processing time : "
+            f"{total_time:.3f}s\n"
+            f"Parsed lines          : "
+            f"{parsed_count:,}\n"
+            f"Detections            : "
+            f"{detection_count:,}\n"
             "\n"
-            f"Parser iteration      : {parser_time:.3f}s\n"
-            f"Threat detection      : {threat_detection_time:.3f}s\n"
-            f"Brute-force detection : {brute_force_time:.3f}s\n"
-            f"Aggregation           : {aggregation_time:.3f}s\n"
-            f"Log database writes   : {log_db_time:.3f}s\n"
-            f"Detection DB writes   : {detection_db_time:.3f}s\n"
-            f"Job updates           : {job_update_time:.3f}s\n"
-            f"Other/unmeasured      : {unmeasured_time:.3f}s\n"
+            f"Parser iteration      : "
+            f"{parser_time:.3f}s\n"
+            f"Threat detection      : "
+            f"{threat_detection_time:.3f}s\n"
+            f"Brute-force detection : "
+            f"{brute_force_time:.3f}s\n"
+            f"Aggregation           : "
+            f"{aggregation_time:.3f}s\n"
+            f"Log database writes   : "
+            f"{log_db_time:.3f}s\n"
+            f"Detection DB writes   : "
+            f"{detection_db_time:.3f}s\n"
+            f"Job updates           : "
+            f"{job_update_time:.3f}s\n"
+            f"Other/unmeasured      : "
+            f"{unmeasured_time:.3f}s\n"
             "============================================================\n",
             flush=True,
         )
