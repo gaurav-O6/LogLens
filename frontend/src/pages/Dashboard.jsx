@@ -752,12 +752,7 @@ function Dashboard() {
 
                     <span>
 
-                        Page {page} of {pages}
-
-                        {
-                            total > 0 &&
-                            ` • ${total.toLocaleString()} detections`
-                        }
+                        Page {page} / {pages}
 
                     </span>
 

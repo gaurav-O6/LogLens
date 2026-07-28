@@ -2112,3 +2112,388 @@ td{
     }
 
 }
+
+/* ==========================================================
+   HISTORY DATABASE MANAGEMENT
+========================================================== */
+
+.history-danger-zone {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 24px;
+
+    margin-top: 24px;
+
+    padding: 22px;
+
+    background: #0d1117;
+
+    border: 1px solid #5a1f1f;
+
+    border-radius: 12px;
+
+}
+
+
+.history-danger-content {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 14px;
+
+    min-width: 0;
+
+}
+
+
+.history-danger-icon {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 40px;
+
+    height: 40px;
+
+    border-radius: 8px;
+
+    background: rgba(248, 81, 73, 0.12);
+
+    color: #f85149;
+
+}
+
+
+.history-danger-content h2 {
+
+    margin: 0 0 5px;
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    color: #e6edf3;
+
+}
+
+
+.history-danger-content p {
+
+    margin: 0;
+
+    max-width: 650px;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    color: #8b949e;
+
+}
+
+
+.history-clear-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    flex-shrink: 0;
+
+    min-height: 38px;
+
+    padding: 0 16px;
+
+    border: 1px solid #f85149;
+
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #f85149;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        opacity 0.2s ease;
+
+}
+
+
+.history-clear-btn:hover:not(:disabled) {
+
+    background: #f85149;
+
+    color: #ffffff;
+
+}
+
+
+.history-clear-btn:disabled {
+
+    opacity: 0.45;
+
+    cursor: not-allowed;
+
+}
+
+
+.history-clear-warning {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    margin: 10px 2px 0;
+
+    color: #d29922;
+
+    font-size: 12px;
+
+}
+
+
+@media (max-width: 700px) {
+
+    .history-danger-zone {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    .history-clear-btn {
+
+        width: 100%;
+
+    }
+
+}
+
+/* ==========================================================
+   THREATS PAGINATION
+========================================================== */
+
+.pagination {
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    padding:18px 0 4px;
+}
+
+.pagination button,
+.dashboard-pagination button {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    min-width:92px;
+    height:40px;
+
+    padding:0 16px;
+
+    border:1px solid #30363d;
+    border-radius:8px;
+
+    background:#161b22;
+    color:#c9d1d9;
+
+    font-size:13px;
+    font-weight:600;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        opacity .18s ease;
+}
+
+.pagination button:hover:not(:disabled),
+.dashboard-pagination button:hover:not(:disabled) {
+    background:#21262d;
+    border-color:#484f58;
+    color:#ffffff;
+}
+
+.pagination button:disabled,
+.dashboard-pagination button:disabled {
+    cursor:not-allowed;
+    opacity:.35;
+}
+
+
+/* ==========================================================
+   PAGINATION
+========================================================== */
+
+.pagination,
+.dashboard-pagination {
+    width:100%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:12px;
+
+    padding:18px 0 4px;
+}
+
+
+.pagination button,
+.dashboard-pagination button {
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:92px;
+
+    height:40px;
+
+    padding:0 16px;
+
+    border:1px solid #30363d;
+
+    border-radius:8px;
+
+    background:#161b22;
+
+    color:#c9d1d9;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        opacity .18s ease;
+}
+
+
+.pagination button:hover:not(:disabled),
+.dashboard-pagination button:hover:not(:disabled) {
+
+    background:#21262d;
+
+    border-color:#484f58;
+
+    color:#ffffff;
+
+}
+
+
+.pagination button:disabled,
+.dashboard-pagination button:disabled {
+
+    cursor:not-allowed;
+
+    opacity:.35;
+
+}
+
+
+.pagination span,
+.dashboard-pagination span {
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:150px;
+
+    height:40px;
+
+    padding:0 18px;
+
+    border:1px solid #30363d;
+
+    border-radius:8px;
+
+    background:#0d1117;
+
+    color:#c9d1d9;
+
+    font-size:13px;
+
+    font-weight:500;
+
+    white-space:nowrap;
+}
+
+
+/* ==========================================================
+   MOBILE PAGINATION
+========================================================== */
+
+@media (max-width:700px) {
+
+    .pagination,
+    .dashboard-pagination {
+
+        gap:8px;
+
+        flex-wrap:wrap;
+
+    }
+
+
+    .pagination span,
+    .dashboard-pagination span {
+
+        order:-1;
+
+        width:100%;
+
+        min-width:0;
+
+    }
+
+
+    .pagination button,
+    .dashboard-pagination button {
+
+        flex:1;
+
+        min-width:0;
+
+    }
+
+}

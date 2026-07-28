@@ -28,8 +28,13 @@ class ProcessingService:
     def process_file(
         self,
         file_path: Path,
-        job_id=None
+        job_id=None,
     ):
+
+        if job_id is None:
+            raise ValueError(
+                "job_id is required for processing."
+            )
 
         total_start = perf_counter()
 
@@ -114,8 +119,10 @@ class ProcessingService:
 
             start = perf_counter()
 
-            brute_force = self.brute_force_detector.process(
-                log_entry
+            brute_force = (
+                self.brute_force_detector.process(
+                    log_entry
+                )
             )
 
             brute_force_time += (
@@ -149,7 +156,8 @@ class ProcessingService:
                 start = perf_counter()
 
                 save_logs(
-                    log_batch
+                    log_batch,
+                    job_id,
                 )
 
                 db.session.commit()
@@ -162,32 +170,30 @@ class ProcessingService:
 
                 batch_number += 1
 
-                if job_id:
+                start = perf_counter()
 
-                    start = perf_counter()
+                job = Job.query.get(
+                    job_id
+                )
 
-                    job = Job.query.get(
-                        job_id
+                if job:
+
+                    job.progress = min(
+                        90,
+                        10 + batch_number,
                     )
 
-                    if job:
+                    db.session.commit()
 
-                        job.progress = min(
-                            90,
-                            10 + batch_number
-                        )
-
-                        db.session.commit()
-
-                    job_update_time += (
-                        perf_counter() - start
-                    )
+                job_update_time += (
+                    perf_counter() - start
+                )
 
                 print(
                     f"[PROCESS] Saved log batch "
                     f"{batch_number} | "
                     f"Parsed={parsed_count:,}",
-                    flush=True
+                    flush=True,
                 )
 
             # -----------------------------------------------------
@@ -217,7 +223,7 @@ class ProcessingService:
                 print(
                     f"[PROCESS] Saved detection batch | "
                     f"Total detections={detection_count:,}",
-                    flush=True
+                    flush=True,
                 )
 
         # =========================================================
@@ -229,7 +235,8 @@ class ProcessingService:
             start = perf_counter()
 
             save_logs(
-                log_batch
+                log_batch,
+                job_id,
             )
 
             db.session.commit()
@@ -240,7 +247,7 @@ class ProcessingService:
 
             print(
                 "[PROCESS] Saved final log batch",
-                flush=True
+                flush=True,
             )
 
         # =========================================================
@@ -267,30 +274,28 @@ class ProcessingService:
 
             print(
                 "[PROCESS] Saved final detection batch",
-                flush=True
+                flush=True,
             )
 
         # =========================================================
         # FINAL JOB UPDATE
         # =========================================================
 
-        if job_id:
+        start = perf_counter()
 
-            start = perf_counter()
+        job = Job.query.get(
+            job_id
+        )
 
-            job = Job.query.get(
-                job_id
-            )
+        if job:
 
-            if job:
+            job.progress = 95
 
-                job.progress = 95
+            db.session.commit()
 
-                db.session.commit()
-
-            job_update_time += (
-                perf_counter() - start
-            )
+        job_update_time += (
+            perf_counter() - start
+        )
 
         # =========================================================
         # FINAL PROFILE
@@ -312,7 +317,7 @@ class ProcessingService:
 
         unmeasured_time = max(
             0.0,
-            total_time - measured_time
+            total_time - measured_time,
         )
 
         print(
@@ -333,18 +338,20 @@ class ProcessingService:
             f"Job updates           : {job_update_time:.3f}s\n"
             f"Other/unmeasured      : {unmeasured_time:.3f}s\n"
             "============================================================\n",
-            flush=True
+            flush=True,
         )
 
         print(
             f"[PROCESS COMPLETE] "
             f"Parsed={parsed_count:,} "
             f"Detections={detection_count:,}",
-            flush=True
+            flush=True,
         )
 
         return {
             "parsed_count": parsed_count,
             "detection_count": detection_count,
-            "summary": self.aggregation_service.get_summary(),
+            "summary": (
+                self.aggregation_service.get_summary()
+            ),
         }

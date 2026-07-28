@@ -12,6 +12,8 @@ import {
     RefreshCw,
     FileText,
     ExternalLink,
+    Trash2,
+    AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -37,6 +39,9 @@ function History() {
 
     const [refreshing, setRefreshing] = useState(false);
 
+    const [clearingDatabase, setClearingDatabase] =
+        useState(false);
+
 
     const jobsRef = useRef([]);
 
@@ -54,7 +59,6 @@ function History() {
 
         const interval = setInterval(() => {
 
-
             const activeJobs =
                 jobsRef.current.some(
                     job =>
@@ -69,7 +73,6 @@ function History() {
 
             }
 
-
         }, 5000);
 
 
@@ -78,7 +81,6 @@ function History() {
             clearInterval(interval);
 
         };
-
 
     }, []);
 
@@ -91,9 +93,7 @@ function History() {
 
     async function loadJobs(showLoading = true) {
 
-
         try {
-
 
             if (showLoading) {
 
@@ -127,12 +127,10 @@ function History() {
 
             setJobs(data);
 
-
         }
 
 
         catch (error) {
-
 
             console.error(
                 "HISTORY ERROR",
@@ -144,20 +142,107 @@ function History() {
                 "Failed to load job history."
             );
 
+        }
+
+
+        finally {
+
+            setLoading(false);
+
+            setRefreshing(false);
+
+        }
+
+    }
+
+
+    /*
+    ==========================================================
+    CLEAR DATABASE
+    ==========================================================
+    */
+
+    async function clearDatabase() {
+
+        if (clearingDatabase) {
+
+            return;
+
+        }
+
+
+        const confirmed =
+            window.confirm(
+                "WARNING: This will permanently delete ALL log entries, detections, and job history.\n\nThis action cannot be undone.\n\nAre you sure you want to continue?"
+            );
+
+
+        if (!confirmed) {
+
+            return;
+
+        }
+
+
+        const finalConfirmation =
+            window.confirm(
+                "Final confirmation:\n\nDelete the entire LogLens analysis database?"
+            );
+
+
+        if (!finalConfirmation) {
+
+            return;
+
+        }
+
+
+        try {
+
+            setClearingDatabase(true);
+
+            setError("");
+
+
+            await api.post(
+                "/admin/reset-database"
+            );
+
+
+            jobsRef.current = [];
+
+            setJobs([]);
+
+
+            await loadJobs(false);
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "DATABASE RESET ERROR",
+                error
+            );
+
+
+            const message =
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Failed to clear the database.";
+
+
+            setError(message);
 
         }
 
 
         finally {
 
-
-            setLoading(false);
-
-            setRefreshing(false);
-
+            setClearingDatabase(false);
 
         }
-
 
     }
 
@@ -170,7 +255,6 @@ function History() {
 
     const formatDate = (date) => {
 
-
         if (!date) {
 
             return "-";
@@ -180,7 +264,6 @@ function History() {
 
         return new Date(date)
             .toLocaleString();
-
 
     };
 
@@ -193,9 +276,7 @@ function History() {
 
     const statusClass = (status) => {
 
-
         switch (status?.toLowerCase()) {
-
 
             case "completed":
 
@@ -234,7 +315,6 @@ function History() {
 
     const openAnalysis = (job) => {
 
-
         if (!job?.id) {
 
             return;
@@ -245,7 +325,6 @@ function History() {
         navigate(
             `/?job_id=${encodeURIComponent(job.id)}`
         );
-
 
     };
 
@@ -389,7 +468,8 @@ function History() {
 
                             disabled={
                                 loading ||
-                                refreshing
+                                refreshing ||
+                                clearingDatabase
                             }
 
                         >
@@ -620,7 +700,7 @@ function History() {
 
                                                                     <span className="history-analysis-disabled">
 
-                                                                        —
+                                                                        â€”
 
                                                                     </span>
                                                             }
@@ -648,6 +728,87 @@ function History() {
 
 
             </div>
+
+
+            {/* =================================================
+                DATABASE MANAGEMENT
+            ================================================= */}
+
+            <div className="history-danger-zone">
+
+
+                <div className="history-danger-content">
+
+
+                    <div className="history-danger-icon">
+
+                        <AlertTriangle size={22} />
+
+                    </div>
+
+
+                    <div>
+
+                        <h2>
+                            Database Management
+                        </h2>
+
+                        <p>
+                            Permanently remove all uploaded log
+                            entries, detections, and analysis history.
+                        </p>
+
+                    </div>
+
+
+                </div>
+
+
+                <button
+
+                    type="button"
+
+                    className="history-clear-btn"
+
+                    onClick={clearDatabase}
+
+                    disabled={
+                        clearingDatabase ||
+                        activeJobs > 0
+                    }
+
+                >
+
+                    <Trash2 size={17} />
+
+                    {
+                        clearingDatabase
+                            ?
+                            "Clearing..."
+                            :
+                            "Clear Database"
+                    }
+
+                </button>
+
+
+            </div>
+
+
+            {
+                activeJobs > 0 && (
+
+                    <p className="history-clear-warning">
+
+                        <AlertTriangle size={15} />
+
+                        Wait for active processing jobs to finish
+                        before clearing the database.
+
+                    </p>
+
+                )
+            }
 
 
         </div>

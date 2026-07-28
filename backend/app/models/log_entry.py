@@ -1,14 +1,30 @@
+
 from datetime import datetime
 
 from app.database.db import db
 
 
 class LogEntry(db.Model):
-    """Database model for a parsed log entry."""
+    """
+    Database model for a parsed log entry.
+    """
 
     __tablename__ = "log_entries"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    job_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "jobs.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
 
     ip_address = db.Column(
         db.String(45),
@@ -45,4 +61,13 @@ class LogEntry(db.Model):
         db.DateTime,
         default=datetime.utcnow,
         nullable=False,
+    )
+
+    # ---------------------------------------------------------
+    # JOB
+    # ---------------------------------------------------------
+
+    job = db.relationship(
+        "Job",
+        back_populates="log_entries",
     )

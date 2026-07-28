@@ -10,112 +10,104 @@ class Detection(db.Model):
 
     __tablename__ = "detections"
 
-
     id = db.Column(
         db.Integer,
-        primary_key=True
+        primary_key=True,
     )
-
 
     job_id = db.Column(
         db.Integer,
         db.ForeignKey("jobs.id"),
         nullable=True,
-        index=True
+        index=True,
     )
-
 
     attack_type = db.Column(
         db.String(100),
         nullable=False,
-        index=True
+        index=True,
     )
-
 
     severity = db.Column(
         db.String(20),
         nullable=False,
-        index=True
+        index=True,
     )
-
 
     source_ip = db.Column(
         db.String(45),
         nullable=False,
-        index=True
+        index=True,
     )
-
 
     is_private_ip = db.Column(
         db.Boolean,
         nullable=False,
         default=False,
-        index=True
+        index=True,
     )
-
 
     country = db.Column(
         db.String(100),
         nullable=True,
     )
 
-
     city = db.Column(
         db.String(100),
         nullable=True,
     )
-
 
     latitude = db.Column(
         db.Float,
         nullable=True,
     )
 
-
     longitude = db.Column(
         db.Float,
         nullable=True,
     )
 
-
     timestamp = db.Column(
         db.String(50),
-        nullable=True
+        nullable=True,
     )
-
 
     matched_pattern = db.Column(
         db.Text,
-        nullable=True
+        nullable=True,
     )
-
 
     http_method = db.Column(
         db.String(10),
-        nullable=True
+        nullable=True,
     )
-
 
     request_path = db.Column(
         db.Text,
-        nullable=True
+        nullable=True,
     )
-
 
     status_code = db.Column(
         db.Integer,
-        nullable=True
+        nullable=True,
     )
-
 
     raw_log = db.Column(
         db.Text,
-        nullable=True
+        nullable=True,
     )
-
 
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        nullable=False
+        nullable=False,
+    )
+
+    # ---------------------------------------------------------
+    # JOB
+    # ---------------------------------------------------------
+
+    job = db.relationship(
+        "Job",
+        back_populates="detections",
     )
