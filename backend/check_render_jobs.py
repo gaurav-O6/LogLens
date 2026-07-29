@@ -1,10 +1,14 @@
 import os
-from time import perf_counter
 
 from sqlalchemy import create_engine, text
 
 
-DATABASE_URL = os.environ["DATABASE_URL"]
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL environment variable is not set."
+    )
 
 
 engine = create_engine(
@@ -13,116 +17,141 @@ engine = create_engine(
 )
 
 
+def print_section(title):
+    print("\n" + "=" * 70)
+    print(title)
+    print("=" * 70)
+
+
 with engine.connect() as conn:
 
-    print("=" * 60)
-    print("POSTGRESQL PERFORMANCE TEST")
-    print("=" * 60)
+    print_section("DATABASE CONNECTION")
 
-    start = perf_counter()
+    db_name = conn.execute(
+        text("SELECT current_database();")
+    ).scalar()
 
-    conn.execute(text("SELECT 1"))
+    current_user = conn.execute(
+        text("SELECT current_user;")
+    ).scalar()
 
-    elapsed = perf_counter() - start
+    print(f"Database : {db_name}")
+    print(f"User     : {current_user}")
 
-    print(f"\nSELECT 1 round trip : {elapsed:.3f}s")
+    print_section("JOB STATUS COUNTS")
 
-    start = perf_counter()
+    rows = conn.execute(
+        text(
+            """
+            SELECT
+                status,
+                COUNT(*) AS total
+            FROM jobs
+            GROUP BY status
+            ORDER BY status;
+            """
+        )
+    ).fetchall()
 
-    result = conn.execute(
-        text("SELECT COUNT(*) FROM detections")
-    )
+    if not rows:
+        print("No jobs found.")
+    else:
+        for row in rows:
+            print(f"{row.status:<15}{row.total}")
 
-    count = result.scalar()
+    print_section("ACTIVE JOBS")
 
-    elapsed = perf_counter() - start
-
-    print(f"Detection count     : {count:,}")
-    print(f"COUNT(*) time       : {elapsed:.3f}s")
-
-    start = perf_counter()
-
-    result = conn.execute(
-        text("""
+    rows = conn.execute(
+        text(
+            """
             SELECT
                 id,
-                attack_type,
-                severity,
-                source_ip
-            FROM detections
-            ORDER BY id DESC
-            LIMIT 100;
-        """)
-    )
-
-    rows = result.fetchall()
-
-    elapsed = perf_counter() - start
-
-    print(f"\nLatest 100 rows     : {len(rows)}")
-    print(f"Latest query time   : {elapsed:.3f}s")
-
-    start = perf_counter()
-
-    result = conn.execute(
-        text("""
-            SELECT COUNT(*)
-            FROM detections
-            WHERE severity = 'High';
-        """)
-    )
-
-    high_count = result.scalar()
-
-    elapsed = perf_counter() - start
-
-    print(f"\nHigh detections     : {high_count:,}")
-    print(f"Severity query time : {elapsed:.3f}s")
-
-    start = perf_counter()
-
-    result = conn.execute(
-        text("""
-            SELECT
-                id,
+                filename,
                 status,
                 progress,
+                created_at,
                 started_at,
                 completed_at
             FROM jobs
-            ORDER BY id DESC
-            LIMIT 1;
-        """)
-    )
+            WHERE status IN ('queued','processing')
+            ORDER BY id;
+            """
+        )
+    ).fetchall()
 
-    latest_job = result.fetchone()
+    if not rows:
+        print("No active jobs.")
+    else:
+        for row in rows:
+            print("-" * 70)
+            print(f"ID         : {row.id}")
+            print(f"Filename   : {row.filename}")
+            print(f"Status     : {row.status}")
+            print(f"Progress   : {row.progress}")
+            print(f"Created    : {row.created_at}")
+            print(f"Started    : {row.started_at}")
+            print(f"Completed  : {row.completed_at}")
 
-    elapsed = perf_counter() - start
+    print_section("LATEST 20 JOBS")
 
-    print(f"\nLatest job          : {latest_job}")
-    print(f"Job query time      : {elapsed:.3f}s")
-
-    print("\n" + "=" * 60)
-    print("INDEX INFORMATION")
-    print("=" * 60)
-
-    indexes = conn.execute(
-        text("""
+    rows = conn.execute(
+        text(
+            """
             SELECT
-                indexname,
-                indexdef
-            FROM pg_indexes
-            WHERE tablename = 'detections'
-            ORDER BY indexname;
-        """)
-    )
+                id,
+                filename,
+                status,
+                progress,
+                created_at,
+                completed_at
+            FROM jobs
+            ORDER BY id DESC
+            LIMIT 20;
+            """
+        )
+    ).fetchall()
 
-    for index in indexes:
+    for row in rows:
         print(
-            f"\n{index.indexname}\n"
-            f"  {index.indexdef}"
+            f"{row.id:>4} | "
+            f"{row.status:<11} | "
+            f"{row.progress:>3}% | "
+            f"{row.filename}"
         )
 
-    print("\n" + "=" * 60)
-    print("TEST COMPLETE")
-    print("=" * 60)
+    print_section("CLEAR STUCK JOBS")
+
+    result = conn.execute(
+        text(
+            """
+            UPDATE jobs
+            SET
+                status='failed',
+                progress=100,
+                completed_at=NOW()
+            WHERE status IN ('queued','processing');
+            """
+        )
+    )
+
+    conn.commit()
+
+    print(
+        f"Updated {result.rowcount} stuck jobs."
+    )
+
+    print_section("ACTIVE JOBS AFTER CLEANUP")
+
+    remaining = conn.execute(
+        text(
+            """
+            SELECT COUNT(*)
+            FROM jobs
+            WHERE status IN ('queued','processing');
+            """
+        )
+    ).scalar()
+
+    print(f"Remaining active jobs: {remaining}")
+
+    print("\nDone.")

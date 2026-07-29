@@ -1,420 +1,274 @@
-# LogLens - Simplified Security Log Analysis
+# LogLens – Simplified Security Log Analysis (SIEM-lite)
 
-![LogLens Banner](docs/banner.png)
-
-
-# Overview
-
-LogLens is a lightweight Security Information and Event Management (SIEM-lite) platform designed to analyze Apache/Nginx web server logs.
-
-Traditional server logs contain millions of requests, making manual investigation extremely difficult. LogLens automates log ingestion, parsing, threat detection, geographic enrichment, and security visualization through an interactive SOC dashboard.
-
-The system helps security analysts answer:
-
-- Who attacked the system?
-- What attack technique was used?
-- When did the attack happen?
-- Where did the attacker originate?
-
-
----
-
-# Screenshots
-
-
-## SOC Dashboard
-
-![SOC Dashboard](docs/dashboard.png)
-
-
-The SOC dashboard provides:
-
-- Real-time security overview
-- Attack statistics
-- Severity analysis
-- Threat intelligence
-- Geographic attack visualization
-- Timeline monitoring
-
-
-
-## Threat Center
-
-![Threat Center](docs/threat-center.png)
-
-
-The Threat Center allows analysts to:
-
-- Search security incidents
-- Filter threats by severity
-- Filter by attack type
-- Investigate individual detections
-- View matched attack signatures
-
-
-
-## Analytics Dashboard
-
-![Analytics](docs/analytics.png)
-
-
-Analytics provides:
-
-- Attack trends
-- Source IP analysis
-- Attack distribution
-- Detection timelines
-
-
-
-## Investigation Panel
-
-![Investigation Panel](docs/investigation.png)
-
-
-Security analysts can inspect:
-
-- Source information
-- Attack classification
-- Request details
-- Matched patterns
-- Raw log evidence
-
-
+LogLens is a lightweight Security Information and Event Management (SIEM-lite) platform that analyzes Apache and Nginx web server logs to identify common web attacks. The system processes uploaded log files asynchronously, detects malicious activity using rule-based signatures, enriches results with GeoIP information, and presents them through an interactive security dashboard.
 
 ---
 
 # Features
 
-
-# Log Processing
-
-
-LogLens supports efficient processing of large Apache/Nginx log files.
-
-
-Features:
-
-- Apache/Nginx Common Log Format support
-- Streaming file processing
-- Large log file handling
-- Batch database insertion
-- Background processing using Redis Queue
-- Asynchronous worker architecture
-
-
-Large files are processed without loading the complete file into memory.
-
+- Upload Apache/Nginx log files
+- Direct browser uploads to Cloudflare R2
+- Asynchronous log processing using Redis Queue (RQ)
+- Streaming parser for efficient large file handling
+- Signature-based threat detection
+- Brute-force attack detection
+- GeoIP enrichment
+- Interactive SOC dashboard
+- Threat investigation interface
+- Analytics and visualization
+- Job progress tracking
+- CSV and JSON export support
 
 ---
 
-# Threat Detection
+# Supported Attack Detection
 
+LogLens currently detects:
 
-## Signature Based Detection
+- Cross-Site Scripting (XSS)
+- Directory Traversal
+- Sensitive File Access
+- Brute Force Login Attempts
 
-
-LogLens uses configurable regex-based detection signatures to identify malicious requests.
-
-
-Currently detected attacks:
-
-
-### Cross-Site Scripting (XSS)
-
-Detects malicious script injection attempts.
-
-
-Example:
-
-
-GET /search?q=<script>alert(1)</script>
-
-
-
-
-### Directory Traversal
-
-Detects attempts to access restricted files.
-
-
-Example:
-
-
-GET /../../etc/passwd
-
-
-
-
-### Sensitive File Access
-
-Detects attempts to access sensitive resources.
-
-
-Examples:
-
-
-.env
-
-phpinfo.php
-
-robots.txt
-
-sitemap.xml
-
-
-
-
-Detection rules are stored separately and can be extended with additional signatures.
-
-
+Detection rules are configurable and can be extended by adding additional signatures.
 
 ---
 
-# Brute Force Detection
+# Technology Stack
 
+## Frontend
 
-LogLens detects repeated authentication failures.
+- React
+- Vite
+- Axios
+- Recharts
+- Leaflet
 
+## Backend
 
-Example:
+- Flask
+- SQLAlchemy
+- Flask-Migrate
+- PostgreSQL
+- Redis
+- RQ (Redis Queue)
 
+## Storage
 
-POST /login 401
-POST /login 401
-POST /login 401
-POST /login 401
+- Cloudflare R2 Object Storage
 
+## Deployment
 
-
-Repeated failed login attempts are automatically classified as high severity security events.
-
-
-
----
-
-# Threat Intelligence
-
-
-Each detected security event contains:
-
-
-- Source IP
-- Attack type
-- Severity
-- Timestamp
-- HTTP method
-- Request path
-- Status code
-- Matched signature pattern
-- Raw log entry
-
-
-This information allows analysts to investigate the complete attack context.
-
-
+- Render
+- Northflank
+- Upstash Redis
 
 ---
 
-# GeoIP Intelligence
+# System Architecture
 
-
-LogLens enriches detected threats with geographic information.
-
-
-Provides:
-
-- Country
-- City
-- Latitude
-- Longitude
-- Public/private IP classification
-
-
-Threat locations are displayed using an interactive global attack map.
-
-
-
----
-
-# SOC Dashboard
-
-
-The security dashboard provides:
-
-
-## Security Overview
-
-- Total detected attacks
-- Critical threats
-- Attack categories
-- Threat signatures
-
-
-
-## Threat Intelligence
-
-Displays:
-
-- Most active attacker IP
-- Top attack origin country
-- Most targeted endpoint
-- Highest risk attack type
-- Latest security event
-- Network exposure analysis
-
-
-
-## Visualization
-
-Includes:
-
-- Severity distribution
-- Attack classification charts
-- Detection timeline
-- Top attacker ranking
-- Global attack map
-
-
-
-## Investigation Workflow
-
-Security analysts can:
-
-- Select incidents
-- Review detailed evidence
-- Analyze attack patterns
-- Investigate suspicious activity
-
-
-
----
-
-# Architecture
-
-
-                     React Dashboard
-                           |
-                           |
-                     Flask REST API
-                           |
-    ------------------------------------------------
-    |                      |                       |
-
-Log Parser Detection Engine GeoIP Service
-| |
-| -----------------
-| | |
-| Signature Rules Brute Force Detection
-|
-|
-PostgreSQL Database
-
-                           |
-                           |
-                 Redis Queue + RQ Workers
-
+```
+                 React Frontend
+                        │
+                        ▼
+                  Flask REST API
+                        │
+         ┌──────────────┴──────────────┐
+         │                             │
+         ▼                             ▼
+ Cloudflare R2                  PostgreSQL
+         │
+         ▼
+      Redis Queue
+         │
+         ▼
+      RQ Worker
+         │
+         ▼
+  Log Processing Engine
+         │
+         ├── Streaming Parser
+         ├── Threat Detection
+         ├── Brute Force Detection
+         ├── GeoIP Enrichment
+         └── Database Storage
+```
 
 ---
 
 # Processing Pipeline
 
-
-LogLens follows this processing workflow:
-
-
-
+```
 Upload Log File
-
-   |
-
-Background Job Created
-
-   |
-
+        │
+        ▼
+Cloudflare R2 Storage
+        │
+        ▼
+Create Processing Job
+        │
+        ▼
 Redis Queue
-
-   |
-
+        │
+        ▼
 RQ Worker
-
-   |
-
+        │
+        ▼
 Streaming Parser
-
-   |
-
+        │
+        ▼
 Threat Detection
-
-   |
-
+        │
+        ▼
 GeoIP Enrichment
-
-   |
-
+        │
+        ▼
 Database Storage
-
-   |
-
+        │
+        ▼
 Dashboard Analytics
-
-
-
-The asynchronous architecture prevents large log uploads from blocking API requests.
-
-
+```
 
 ---
 
-# Production Deployment Architecture
+# Screenshots
 
+## Dashboard
 
-                 Users
+![Dashboard](docs/dashboard.png)
 
-                   |
+---
 
-            React Frontend
+## Threat Center
 
-                   |
+![Threat Center](docs/threat-center.png)
 
-             Flask Backend
+---
 
-                   |
+## Analytics
 
-    --------------------------------
+![Analytics](docs/analytics.png)
 
-    |                              |
+---
 
-PostgreSQL Database Upstash Redis
+## Investigation Panel
 
-                                  |
+![Investigation](docs/investigation.png)
 
-                              RQ Worker
+---
 
+# Project Structure
 
-Production components:
+```
+LogLens/
+│
+├── backend/
+│   ├── app/
+│   ├── migrations/
+│   ├── sample_logs/
+│   └── requirements.txt
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── package.json
+│
+└── README.md
+```
 
+---
 
-Frontend:
+# Installation
 
-- React/Vite application
+## Backend
 
+```bash
+cd backend
 
-Backend:
+python -m venv venv
 
-- Flask API service
+source venv/bin/activate
+# Windows:
+venv\Scripts\activate
 
+pip install -r requirements.txt
 
-Database:
+flask db upgrade
 
-- PostgreSQL
+python run.py
+```
 
+---
 
-Queue:
+## Frontend
 
-- Upstash Redis
+```bash
+cd frontend
 
+npm install
 
-Background Processing:
+npm run dev
+```
 
-- RQ worker service
+---
+
+# Environment Variables
+
+Create a `.env` file inside the backend directory.
+
+Example:
+
+```env
+SECRET_KEY=your_secret_key
+
+DATABASE_URL=your_database_url
+
+REDIS_URL=your_redis_url
+
+R2_ACCESS_KEY=your_access_key
+
+R2_SECRET_KEY=your_secret_key
+
+R2_BUCKET=your_bucket_name
+
+R2_ENDPOINT=your_endpoint
+```
+
+---
+
+# Performance
+
+The application uses:
+
+- Streaming log parsing
+- Batch database inserts
+- PostgreSQL COPY optimization
+- Redis Queue background processing
+- Asynchronous workers
+
+These optimizations allow LogLens to efficiently process large log files while keeping the web interface responsive.
+
+---
+
+# Future Improvements
+
+- Additional attack signatures
+- Machine learning anomaly detection
+- Real-time log ingestion
+- Email alerting
+- User authentication
+- Multi-user support
+- Elasticsearch integration
+- Kibana-style dashboards
+
+---
+
+# Author
+
+**Gaurav Thakare**
+
+Bachelor of Engineering (Computer Science)
+
+Cybersecurity Internship Project
+
+2026

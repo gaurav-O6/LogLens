@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from flask import (
@@ -22,6 +23,10 @@ upload_bp = Blueprint(
 
 
 MAX_ACTIVE_JOBS = 3
+
+# Jobs that remain queued/processing longer than this
+# are assumed to be abandoned.
+STALE_JOB_TIMEOUT = timedelta(hours=1)
 
 
 ALLOWED_EXTENSIONS = {
@@ -74,7 +79,51 @@ def enqueue_processing(
         )
 
 
+def cleanup_stale_jobs():
+    """
+    Automatically mark abandoned queued/processing jobs
+    as failed so they don't permanently block uploads.
+    """
+
+    cutoff = datetime.utcnow() - STALE_JOB_TIMEOUT
+
+    stale_jobs = Job.query.filter(
+        Job.status.in_(
+            [
+                "queued",
+                "processing",
+            ]
+        ),
+        Job.created_at < cutoff,
+    ).all()
+
+    if not stale_jobs:
+        return
+
+    print(
+        f"[JOB CLEANUP] Found {len(stale_jobs)} stale jobs.",
+        flush=True,
+    )
+
+    for job in stale_jobs:
+
+        job.status = "failed"
+        job.progress = 0
+
+        if hasattr(job, "completed_at"):
+            job.completed_at = datetime.utcnow()
+
+    db.session.commit()
+
+    print(
+        "[JOB CLEANUP] Stale jobs marked failed.",
+        flush=True,
+    )
+
+
 def check_active_jobs():
+
+    cleanup_stale_jobs()
 
     count = Job.query.filter(
         Job.status.in_(
